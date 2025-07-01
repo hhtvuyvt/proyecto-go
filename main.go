@@ -8,10 +8,8 @@ import (
 )
 
 func main() {
-	r := routes.Router()
-
-	log.Println("Servidor iniciado en http://localhost:8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	log.Println("Servidor en http://localhost:8080")
+	if err := http.ListenAndServe(":8080", routes.Router()); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -51,43 +51,70 @@
 
   <!-- Bootstrap Bundle JS (incluye Popper) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Lógica para añadir y eliminar libros -->
+  <!-- Lógica para interactuar con el backend REST -->
   <script>
-    // Agregar libro
-    document.getElementById('book-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const titulo = document.getElementById('titulo').value.trim();
-      const autor  = document.getElementById('autor').value.trim();
-      const isbn   = document.getElementById('isbn').value.trim();
-      const imagen = document.getElementById('imagen').value.trim() || 'https://via.placeholder.com/150x220?text=Portada';
+    const API_URL = "/api/books";
 
-      if (!(titulo && autor && isbn)) return; // Validación básica
-
+    // Utilidad para crear tarjeta
+    function addBookToDOM(book) {
       const col = document.createElement('div');
       col.className = 'col-sm-6 col-md-4 col-lg-3';
+      col.dataset.id = book.id;
       col.innerHTML = `
         <div class="card h-100 shadow-sm">
-          <img src="${imagen}" class="card-img-top" alt="${titulo}">
+          <img src="${book.image}" class="card-img-top" alt="${book.title}">
           <div class="card-body d-flex flex-column">
-            <h5 class="card-title">${titulo}</h5>
-            <p class="card-text mb-1"><strong>Autor:</strong> ${autor}</p>
-            <p class="card-text text-muted"><small>${isbn}</small></p>
+            <h5 class="card-title">${book.title}</h5>
+            <p class="card-text mb-1"><strong>Autor:</strong> ${book.author}</p>
+            <p class="card-text text-muted"><small>${book.isbn}</small></p>
             <button class="btn btn-outline-danger mt-auto eliminar">Eliminar</button>
           </div>
         </div>`;
 
       document.getElementById('book-list').appendChild(col);
+    }
 
+    // Cargar libros existentes al iniciar
+    async function fetchBooks() {
+      const res = await fetch(API_URL);
+      if (!res.ok) return;
+      const books = await res.json();
+      books.forEach(addBookToDOM);
+    }
+
+    // Agregar libro
+    document.getElementById('book-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const data = {
+        title:  document.getElementById('titulo').value.trim(),
+        author: document.getElementById('autor').value.trim(),
+        isbn:   document.getElementById('isbn').value.trim(),
+        image:  document.getElementById('imagen').value.trim() || 'https://via.placeholder.com/150x220?text=Portada'
+      };
+
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) return;
+      const book = await res.json();
+      addBookToDOM(book);
       this.reset();
       document.getElementById('titulo').focus();
     });
 
     // Delegación de eventos para eliminar libro
-    document.getElementById('book-list').addEventListener('click', function (e) {
-      if (e.target.classList.contains('eliminar')) {
-        e.target.closest('[class*="col-"]').remove();
-      }
+    document.getElementById('book-list').addEventListener('click', async function (e) {
+      if (!e.target.classList.contains('eliminar')) return;
+      const card = e.target.closest('[data-id]');
+      const id = card.dataset.id;
+      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      if (res.ok) card.remove();
     });
+
+    // Inicializar
+    fetchBooks();
   </script>
 </body>
 </html>
