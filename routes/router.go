@@ -5,16 +5,18 @@ import (
 
 	"github.com/hhtvuyvt/proyecto-go/handlers"
 	"github.com/hhtvuyvt/proyecto-go/internal/db"
+	"github.com/hhtvuyvt/proyecto-go/internal/repository"
 )
 
 func Router() http.Handler {
 	mux := http.NewServeMux()
 
-	// Conexión BD y handler
+	// BD y repositorio
 	sqlDB := db.Open()
-	bookH := handlers.BookHandler{DB: sqlDB}
+	repo := repository.BookRepository{DB: sqlDB}
+	bookH := handlers.BookHandler{Repo: repo}
 
-	// API REST
+	// API
 	mux.HandleFunc("/api/books", bookH.Books)
 	mux.HandleFunc("/api/books/", bookH.Book)
 
