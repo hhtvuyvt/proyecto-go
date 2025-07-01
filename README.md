@@ -1,1 +1,1 @@
-# Proyecto Go de práctica
+# Proyecto Go
