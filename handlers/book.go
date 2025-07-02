@@ -7,14 +7,13 @@ import (
 	"strings"
 
 	"github.com/hhtvuyvt/proyecto-go/models"
+	"github.com/hhtvuyvt/proyecto-go/utils"
 )
 
 type BookHandler struct {
 	Repo models.BookRepository
 }
 
-// GET /api/books  → lista
-// POST /api/books → crea
 func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
@@ -34,6 +33,8 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		utils.SanitizeBook(&b)
+
 		if b.Title == "" || b.Author == "" || b.ISBN == "" || b.Image == "" {
 			http.Error(w, "faltan campos obligatorios", http.StatusBadRequest)
 			return
@@ -52,7 +53,6 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DELETE /api/books/{id}
 func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "método no permitido", http.StatusMethodNotAllowed)
