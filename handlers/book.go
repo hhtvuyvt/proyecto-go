@@ -42,14 +42,14 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(b)
 
 	default:
-		http.Error(w, "método no permitido", 405)
+		http.Error(w, "método no permitido", http.StatusMethodNotAllowed)
 	}
 }
 
 // DELETE /api/books/{id}
 func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		http.Error(w, "método no permitido", 405)
+		http.Error(w, "método no permitido", http.StatusMethodNotAllowed)
 		return
 	}
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/books/")
