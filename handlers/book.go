@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -10,7 +9,9 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-type BookHandler struct{ DB *sql.DB }
+type BookHandler struct {
+	Repo models.BookRepository
+}
 
 // GET /api/books  → lista
 // POST /api/books → crea
@@ -18,25 +19,13 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case http.MethodGet:
-		rows, err := h.DB.Query("SELECT id,title,author,isbn,image FROM books")
+		books, err := h.Repo.GetAll()
 		if err != nil {
 			http.Error(w, "error consultando libros", http.StatusInternalServerError)
 			return
 		}
-		defer rows.Close()
-
-		var out []models.Book
-		for rows.Next() {
-			var b models.Book
-			if err := rows.Scan(&b.ID, &b.Title, &b.Author, &b.ISBN, &b.Image); err != nil {
-				http.Error(w, "error leyendo libro", http.StatusInternalServerError)
-				return
-			}
-			out = append(out, b)
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(out)
+		json.NewEncoder(w).Encode(books)
 
 	case http.MethodPost:
 		var b models.Book
@@ -45,21 +34,16 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// ✅ Validación de campos obligatorios
 		if b.Title == "" || b.Author == "" || b.ISBN == "" || b.Image == "" {
 			http.Error(w, "faltan campos obligatorios", http.StatusBadRequest)
 			return
 		}
 
-		res, err := h.DB.Exec(
-			"INSERT INTO books(title,author,isbn,image) VALUES (?,?,?,?)",
-			b.Title, b.Author, b.ISBN, b.Image)
-		if err != nil {
+		if err := h.Repo.Create(&b); err != nil {
 			http.Error(w, "error insertando libro", http.StatusInternalServerError)
 			return
 		}
 
-		b.ID, _ = res.LastInsertId()
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(b)
 
@@ -82,8 +66,7 @@ func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.DB.Exec("DELETE FROM books WHERE id = ?", id)
-	if err != nil {
+	if err := h.Repo.Delete(id); err != nil {
 		http.Error(w, "error eliminando libro", http.StatusInternalServerError)
 		return
 	}

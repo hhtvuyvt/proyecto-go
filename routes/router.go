@@ -5,19 +5,21 @@ import (
 
 	"github.com/hhtvuyvt/proyecto-go/handlers"
 	"github.com/hhtvuyvt/proyecto-go/internal/db"
-	"github.com/hhtvuyvt/proyecto-go/middlewares" // Importa el paquete
+	"github.com/hhtvuyvt/proyecto-go/middlewares"
+	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
 func Router() http.Handler {
 	mux := http.NewServeMux()
 
-	// Conexión BD y handler
+	// Inicializar repositorio
 	sqlDB := db.Open()
-	bookH := handlers.BookHandler{DB: sqlDB}
+	repo := models.BookRepository{DB: sqlDB}
+	bookH := handlers.BookHandler{Repo: repo}
 
 	// API REST
-	mux.HandleFunc("/api/books", bookH.Books)
-	mux.HandleFunc("/api/books/", bookH.Book)
+	mux.Handle("/api/books", http.HandlerFunc(bookH.Books))
+	mux.Handle("/api/books/", http.HandlerFunc(bookH.Book))
 
 	// Archivos estáticos
 	fs := http.FileServer(http.Dir("./static"))
@@ -26,7 +28,7 @@ func Router() http.Handler {
 	// Página principal
 	mux.Handle("/", http.RedirectHandler("/static/index.html", http.StatusTemporaryRedirect))
 
-	// Aplicar middlewares: recover -> logger -> mux
+	// Aplicar middlewares
 	handler := middlewares.RecoverMiddleware(mux)
 	handler = middlewares.LoggerMiddleware(handler)
 
