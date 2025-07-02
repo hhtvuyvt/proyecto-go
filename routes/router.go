@@ -5,6 +5,7 @@ import (
 
 	"github.com/hhtvuyvt/proyecto-go/handlers"
 	"github.com/hhtvuyvt/proyecto-go/internal/db"
+	"github.com/hhtvuyvt/proyecto-go/middlewares" // Importa el paquete
 )
 
 func Router() http.Handler {
@@ -24,5 +25,10 @@ func Router() http.Handler {
 
 	// Página principal
 	mux.Handle("/", http.RedirectHandler("/static/index.html", http.StatusTemporaryRedirect))
-	return mux
+
+	// Aplicar middlewares: recover -> logger -> mux
+	handler := middlewares.RecoverMiddleware(mux)
+	handler = middlewares.LoggerMiddleware(handler)
+
+	return handler
 }
