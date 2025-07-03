@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -8,8 +9,9 @@ import (
 )
 
 func main() {
-	log.Println("Servidor en http://localhost:8081")
-	if err := http.ListenAndServe(":8081", routes.Router()); err != nil {
+	port := 8080
+	log.Println("Servidor en http://localhost:{}", port)
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), routes.Router()); err != nil {
 		log.Fatal(err)
 	}
 }
