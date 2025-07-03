@@ -12,26 +12,22 @@ import (
 func Router() http.Handler {
 	mux := http.NewServeMux()
 
-	// DB y repositorio
 	sqlDB := db.Open()
 	repo := models.BookRepository{DB: sqlDB}
 	bookH := handlers.BookHandler{Repo: repo}
 
-	// API
-	mux.Handle("/api/books", http.HandlerFunc(bookH.Books))
-	mux.Handle("/api/books/", http.HandlerFunc(bookH.Book))
-	mux.HandleFunc("/api/upload", handlers.UploadImage) // 👈 NUEVO endpoint
+	// Login público
+	mux.HandleFunc("/api/login", handlers.Login)
+
+	// Protegido con middleware JWT
+	mux.Handle("/api/books", middlewares.AuthMiddleware(http.HandlerFunc(bookH.Books)))
+	mux.Handle("/api/books/", middlewares.AuthMiddleware(http.HandlerFunc(bookH.Book)))
+	mux.Handle("/api/upload", middlewares.AuthMiddleware(http.HandlerFunc(handlers.UploadImage)))
 
 	// Archivos estáticos
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads")))) // 👈 para servir imágenes
-
-	// Página principal
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 	mux.Handle("/", http.RedirectHandler("/static/index.html", http.StatusTemporaryRedirect))
 
-	// Middleware (logger + recover)
-	handler := middlewares.RecoverMiddleware(mux)
-	handler = middlewares.LoggerMiddleware(handler)
-
-	return handler
+	return middlewares.LoggerMiddleware(mux)
 }
