@@ -74,8 +74,14 @@ func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/books/")
 	id, _ := strconv.Atoi(idStr)
 
-	if err := h.Repo.Delete(id); err != nil {
+	res, err := h.Repo.DB.Exec("DELETE FROM books WHERE id = ?", id)
+	if err != nil {
 		http.Error(w, "error eliminando libro", http.StatusInternalServerError)
+		return
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		http.Error(w, "libro no encontrado", http.StatusNotFound)
 		return
 	}
 

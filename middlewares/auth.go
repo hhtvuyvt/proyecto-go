@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -11,6 +12,10 @@ import (
 var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
 func AuthMiddleware(next http.Handler) http.Handler {
+	if len(jwtKey) == 0 {
+		log.Fatal("Falta JWT_SECRET en .env")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if !strings.HasPrefix(auth, "Bearer ") {

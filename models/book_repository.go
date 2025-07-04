@@ -50,3 +50,17 @@ func (r BookRepository) GetPaginated(search string, limit, offset int) ([]Book, 
 	}
 	return books, nil
 }
+
+func (r BookRepository) Count(search string) (int, error) {
+	query := "SELECT COUNT(*) FROM books"
+	args := []interface{}{}
+
+	if search != "" {
+		query += " WHERE title LIKE ?"
+		args = append(args, "%"+search+"%")
+	}
+
+	var count int
+	err := r.DB.QueryRow(query, args...).Scan(&count)
+	return count, err
+}
