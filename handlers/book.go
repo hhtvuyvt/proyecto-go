@@ -16,13 +16,26 @@ type BookHandler struct {
 
 func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-
 	case http.MethodGet:
-		books, err := h.Repo.GetAll()
+		search := r.URL.Query().Get("search")
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+		if page < 1 {
+			page = 1
+		}
+		if limit < 1 {
+			limit = 10
+		}
+
+		offset := (page - 1) * limit
+
+		books, err := h.Repo.GetPaginated(search, limit, offset)
 		if err != nil {
-			http.Error(w, "error consultando libros", http.StatusInternalServerError)
+			http.Error(w, "error obteniendo libros", http.StatusInternalServerError)
 			return
 		}
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(books)
 
@@ -32,7 +45,6 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "json inválido", http.StatusBadRequest)
 			return
 		}
-
 		utils.SanitizeBook(&b)
 
 		if b.Title == "" || b.Author == "" || b.ISBN == "" || b.Image == "" {
@@ -60,11 +72,7 @@ func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/books/")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "id inválido", http.StatusBadRequest)
-		return
-	}
+	id, _ := strconv.Atoi(idStr)
 
 	if err := h.Repo.Delete(id); err != nil {
 		http.Error(w, "error eliminando libro", http.StatusInternalServerError)

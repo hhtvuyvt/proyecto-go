@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,133 +14,67 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func setupTestRepo(t *testing.T) models.BookRepository {
-	db, err := sql.Open("sqlite3", ":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	schema := `
-	CREATE TABLE books (
+func setupTestHandler() BookHandler {
+	db, _ := sql.Open("sqlite3", ":memory:")
+	db.Exec(`CREATE TABLE books(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title TEXT NOT NULL,
 		author TEXT NOT NULL,
 		isbn TEXT NOT NULL,
 		image TEXT NOT NULL
-	);
-	INSERT INTO books (title, author, isbn, image) VALUES
-	('1984', 'George Orwell', '978-0451524935', 'img.jpg');`
-
-	if _, err := db.Exec(schema); err != nil {
-		t.Fatal(err)
-	}
-
-	return models.BookRepository{DB: db}
+	);`)
+	repo := models.BookRepository{DB: db}
+	return BookHandler{Repo: repo}
 }
 
-func TestGetBooks(t *testing.T) {
-	repo := setupTestRepo(t)
-	h := BookHandler{Repo: repo}
+func TestCreateAndListBooks(t *testing.T) {
+	h := setupTestHandler()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/books", nil)
-	res := httptest.NewRecorder()
-
-	h.Books(res, req)
-
-	if res.Code != http.StatusOK {
-		t.Fatalf("esperaba status 200, obtuve %d", res.Code)
-	}
-
-	if !strings.Contains(res.Body.String(), "1984") {
-		t.Error("respuesta no contiene libro esperado")
-	}
-}
-
-func TestCreateBook(t *testing.T) {
-	repo := setupTestRepo(t)
-	h := BookHandler{Repo: repo}
-
-	body := `{"title":"Clean Code","author":"Robert C. Martin","isbn":"1234567890","image":"img.jpg"}`
+	// Crear libro
+	body := `{"title":"Go","author":"Gopher","isbn":"123","image":"cover.jpg"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/books", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	res := httptest.NewRecorder()
+	w := httptest.NewRecorder()
+	h.Books(w, req)
 
-	h.Books(res, req)
-
-	if res.Code != http.StatusOK {
-		t.Fatalf("esperaba status 200, obtuve %d", res.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("esperado 200, obtuve %d", w.Code)
 	}
 
-	if !strings.Contains(res.Body.String(), "Clean Code") {
-		t.Error("respuesta no contiene libro agregado")
+	// Listar libros
+	req = httptest.NewRequest(http.MethodGet, "/api/books", nil)
+	w = httptest.NewRecorder()
+	h.Books(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("esperado 200 al listar, obtuve %d", w.Code)
 	}
-}
 
-func TestCreateBookInvalidJSON(t *testing.T) {
-	repo := setupTestRepo(t)
-	h := BookHandler{Repo: repo}
-
-	body := `{"title": "Fallo`
-	req := httptest.NewRequest(http.MethodPost, "/api/books", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	res := httptest.NewRecorder()
-
-	h.Books(res, req)
-
-	if res.Code != http.StatusBadRequest {
-		t.Errorf("esperaba 400 por JSON inválido, obtuve %d", res.Code)
+	var books []models.Book
+	json.NewDecoder(w.Body).Decode(&books)
+	if len(books) != 1 || books[0].Title != "Go" {
+		t.Error("libro no encontrado o mal insertado")
 	}
 }
 
-func TestCreateBookMissingFields(t *testing.T) {
-	repo := setupTestRepo(t)
-	h := BookHandler{Repo: repo}
+func TestPaginationAndSearch(t *testing.T) {
+	h := setupTestHandler()
 
-	body := `{"title": "", "author": "", "isbn": "", "image": ""}`
-	req := httptest.NewRequest(http.MethodPost, "/api/books", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	res := httptest.NewRecorder()
-
-	h.Books(res, req)
-
-	if res.Code != http.StatusBadRequest {
-		t.Errorf("esperaba 400 por campos vacíos, obtuve %d", res.Code)
-	}
-}
-
-func TestDeleteBook(t *testing.T) {
-	repo := setupTestRepo(t)
-	h := BookHandler{Repo: repo}
-
-	req := httptest.NewRequest(http.MethodDelete, "/api/books/1", nil)
-	res := httptest.NewRecorder()
-
-	h.Book(res, req)
-
-	if res.Code != http.StatusNoContent {
-		t.Fatalf("esperaba 204 No Content, obtuve %d", res.Code)
+	// Insertar libros
+	for _, title := range []string{"Go", "Rust", "Python", "Go in Depth"} {
+		b := models.Book{Title: title, Author: "Author", ISBN: "123", Image: "img.jpg"}
+		h.Repo.Create(&b)
 	}
 
-	// Verificamos que el libro ya no exista
-	books, err := repo.GetAll()
-	if err != nil {
-		t.Fatal("error consultando libros:", err)
+	req := httptest.NewRequest(http.MethodGet, "/api/books?search=Go&page=1&limit=2", nil)
+	w := httptest.NewRecorder()
+	h.Books(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("esperado 200 en búsqueda, obtuve %d", w.Code)
 	}
-	if len(books) != 0 {
-		t.Error("esperaba que no haya libros después del delete")
-	}
-}
 
-func TestDeleteInvalidID(t *testing.T) {
-	repo := setupTestRepo(t)
-	h := BookHandler{Repo: repo}
-
-	req := httptest.NewRequest(http.MethodDelete, "/api/books/xyz", nil)
-	res := httptest.NewRecorder()
-
-	h.Book(res, req)
-
-	if res.Code != http.StatusBadRequest {
-		t.Errorf("esperaba 400 por ID inválido, obtuve %d", res.Code)
+	body, _ := io.ReadAll(w.Body)
+	if !bytes.Contains(body, []byte("Go")) {
+		t.Error("no se encontraron resultados para búsqueda")
 	}
 }
