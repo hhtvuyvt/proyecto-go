@@ -10,10 +10,14 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/utils"
 )
 
+// / BookHandler maneja las rutas HTTP relacionadas con libros.
 type BookHandler struct {
 	Repo models.BookRepository
 }
 
+// / Books gestiona las peticiones a /api/books.
+// / - GET: lista libros (con búsqueda y paginación)
+// / - POST: crea un nuevo libro
 func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -65,6 +69,7 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// / Book gestiona DELETE /api/books/{id} para eliminar libros.
 func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "método no permitido", http.StatusMethodNotAllowed)

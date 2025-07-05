@@ -11,6 +11,8 @@ import (
 
 var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
+// / AuthMiddleware protege las rutas privadas mediante autenticación JWT.
+// / Valida el token enviado en el header Authorization.
 func AuthMiddleware(next http.Handler) http.Handler {
 	if len(jwtKey) == 0 {
 		log.Fatal("Falta JWT_SECRET en .env")

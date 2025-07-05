@@ -2,10 +2,13 @@ package models
 
 import "database/sql"
 
+// / BookRepository administra el acceso a los libros en la base de datos.
 type BookRepository struct {
 	DB *sql.DB
 }
 
+// / Create agrega un nuevo libro a la base de datos.
+// / El campo ID del libro se actualiza con el valor generado automáticamente.
 func (r BookRepository) Create(b *Book) error {
 	res, err := r.DB.Exec(
 		"INSERT INTO books(title, author, isbn, image) VALUES (?, ?, ?, ?)",
@@ -17,11 +20,17 @@ func (r BookRepository) Create(b *Book) error {
 	return nil
 }
 
+// / Delete elimina un libro de la base de datos según su ID.
+// / Si no existe, la operación no afecta a ningún registro.
 func (r BookRepository) Delete(id int) error {
 	_, err := r.DB.Exec("DELETE FROM books WHERE id = ?", id)
 	return err
 }
 
+// / GetPaginated devuelve una lista de libros con soporte para búsqueda y paginación.
+// / - search: filtro por título (LIKE)
+// / - limit: cantidad máxima de resultados
+// / - offset: desde qué posición comenzar
 func (r BookRepository) GetPaginated(search string, limit, offset int) ([]Book, error) {
 	query := "SELECT id, title, author, isbn, image FROM books"
 	args := []interface{}{}
@@ -51,6 +60,8 @@ func (r BookRepository) GetPaginated(search string, limit, offset int) ([]Book, 
 	return books, nil
 }
 
+// / Count retorna la cantidad total de libros que cumplen con un criterio de búsqueda.
+// / Se utiliza para paginación (conocer el total de páginas disponibles).
 func (r BookRepository) Count(search string) (int, error) {
 	query := "SELECT COUNT(*) FROM books"
 	args := []interface{}{}

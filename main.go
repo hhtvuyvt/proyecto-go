@@ -9,6 +9,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// / Punto de entrada de la aplicación.
+// / Carga el archivo .env, configura el puerto y arranca el servidor HTTP.
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Advertencia: no se pudo cargar .env")

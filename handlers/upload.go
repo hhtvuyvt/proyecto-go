@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+// / UploadImage maneja POST /api/upload.
+// / Recibe un archivo de imagen y lo guarda en /uploads.
+// / Responde con la URL accesible del archivo.
 func UploadImage(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		http.Error(w, "archivo demasiado grande", http.StatusBadRequest)
