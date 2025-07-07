@@ -1,3 +1,4 @@
+// book_repository_test contiene pruebas del repositorio de libros con SQLite en memoria.
 package models
 
 import (
@@ -7,13 +8,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// setupTestRepo crea un repositorio con una base de datos en memoria para pruebas.
 func setupTestRepo(t *testing.T) BookRepository {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal("error abriendo base de datos:", err)
 	}
-
-	const ddl = `
+	ddl := `
 	CREATE TABLE books (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title TEXT NOT NULL,
@@ -24,10 +25,10 @@ func setupTestRepo(t *testing.T) BookRepository {
 	if _, err := db.Exec(ddl); err != nil {
 		t.Fatal("error creando tabla:", err)
 	}
-
 	return BookRepository{DB: db}
 }
 
+// TestCreateAndGetPaginated prueba la inserción y obtención paginada de libros.
 func TestCreateAndGetPaginated(t *testing.T) {
 	repo := setupTestRepo(t)
 
@@ -36,14 +37,12 @@ func TestCreateAndGetPaginated(t *testing.T) {
 		{Title: "Rust", Author: "Rustacean", ISBN: "456", Image: "img2.jpg"},
 		{Title: "Go in Depth", Author: "Expert", ISBN: "789", Image: "img3.jpg"},
 	}
-
 	for _, b := range books {
 		if err := repo.Create(&b); err != nil {
 			t.Fatal("error al crear libro:", err)
 		}
 	}
 
-	// Buscar todos (sin filtro)
 	found, err := repo.GetPaginated("", 10, 0)
 	if err != nil {
 		t.Fatal("error en GetPaginated:", err)
@@ -52,7 +51,6 @@ func TestCreateAndGetPaginated(t *testing.T) {
 		t.Errorf("esperaba 3 libros, obtuve %d", len(found))
 	}
 
-	// Búsqueda filtrada
 	goBooks, err := repo.GetPaginated("Go", 10, 0)
 	if err != nil {
 		t.Fatal("error buscando libros con 'Go':", err)
@@ -62,6 +60,7 @@ func TestCreateAndGetPaginated(t *testing.T) {
 	}
 }
 
+// TestDeleteBook verifica que un libro pueda ser eliminado correctamente.
 func TestDeleteBook(t *testing.T) {
 	repo := setupTestRepo(t)
 
@@ -78,7 +77,6 @@ func TestDeleteBook(t *testing.T) {
 	if err != nil {
 		t.Fatal("error listando libros:", err)
 	}
-
 	for _, b := range books {
 		if b.ID == book.ID {
 			t.Error("el libro eliminado aún aparece en la lista")

@@ -1,3 +1,5 @@
+// UploadImage maneja la subida de archivos a través de /api/upload.
+// Solo permite archivos de imagen y responde con la URL pública del archivo.
 package handlers
 
 import (
@@ -11,9 +13,7 @@ import (
 	"time"
 )
 
-// / UploadImage maneja POST /api/upload.
-// / Recibe un archivo de imagen y lo guarda en /uploads.
-// / Responde con la URL accesible del archivo.
+// UploadImage recibe un archivo por formulario y lo guarda en la carpeta /uploads.
 func UploadImage(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		http.Error(w, "archivo demasiado grande", http.StatusBadRequest)

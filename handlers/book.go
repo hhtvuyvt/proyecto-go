@@ -1,3 +1,4 @@
+// Paquete handlers gestiona las solicitudes HTTP relacionadas con libros.
 package handlers
 
 import (
@@ -10,28 +11,27 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/utils"
 )
 
-// / BookHandler maneja las rutas HTTP relacionadas con libros.
+// BookHandler representa un controlador HTTP para recursos de libros.
 type BookHandler struct {
 	Repo models.BookRepository
 }
 
-// / Books gestiona las peticiones a /api/books.
-// / - GET: lista libros (con búsqueda y paginación)
-// / - POST: crea un nuevo libro
+// Books maneja solicitudes a /api/books.
+// Soporta:
+//   - GET: lista libros con búsqueda y paginación
+//   - POST: crea un nuevo libro validando sus campos
 func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		search := r.URL.Query().Get("search")
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-
 		if page < 1 {
 			page = 1
 		}
 		if limit < 1 {
 			limit = 10
 		}
-
 		offset := (page - 1) * limit
 
 		books, err := h.Repo.GetPaginated(search, limit, offset)
@@ -39,7 +39,6 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "error obteniendo libros", http.StatusInternalServerError)
 			return
 		}
-
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(books)
 
@@ -50,17 +49,14 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		utils.SanitizeBook(&b)
-
 		if b.Title == "" || b.Author == "" || b.ISBN == "" || b.Image == "" {
 			http.Error(w, "faltan campos obligatorios", http.StatusBadRequest)
 			return
 		}
-
 		if err := h.Repo.Create(&b); err != nil {
 			http.Error(w, "error insertando libro", http.StatusInternalServerError)
 			return
 		}
-
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(b)
 
@@ -69,13 +65,13 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// / Book gestiona DELETE /api/books/{id} para eliminar libros.
+// Book maneja DELETE /api/books/{id}.
+// Permite eliminar libros por ID.
 func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "método no permitido", http.StatusMethodNotAllowed)
 		return
 	}
-
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/books/")
 	id, _ := strconv.Atoi(idStr)
 
@@ -89,6 +85,5 @@ func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "libro no encontrado", http.StatusNotFound)
 		return
 	}
-
 	w.WriteHeader(http.StatusNoContent)
 }

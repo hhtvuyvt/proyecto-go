@@ -1,23 +1,16 @@
+// Paquete db se encarga de abrir y preparar la base de datos SQLite.
 package db
 
 import (
 	"database/sql"
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" // Driver para SQLite
 )
 
+// Open abre la base de datos SQLite y crea la tabla books si no existe.
 func Open() *sql.DB {
-	_ = godotenv.Load() // Lee variables de entorno de .env
-
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		dbPath = "./data/books.db" // Valor por defecto
-	}
-
-	database, err := sql.Open("sqlite3", dbPath)
+	database, err := sql.Open("sqlite3", "./data/books.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,6 +25,5 @@ func Open() *sql.DB {
 	if _, err = database.Exec(ddl); err != nil {
 		log.Fatal(err)
 	}
-
 	return database
 }

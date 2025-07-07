@@ -1,3 +1,5 @@
+// AuthMiddleware verifica si el cliente envía un token JWT válido.
+// Protege rutas privadas de accesos no autorizados.
 package middlewares
 
 import (
@@ -9,11 +11,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
-
-// / AuthMiddleware protege las rutas privadas mediante autenticación JWT.
-// / Valida el token enviado en el header Authorization.
+// AuthMiddleware intercepta peticiones HTTP y valida el token JWT.
 func AuthMiddleware(next http.Handler) http.Handler {
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 	if len(jwtKey) == 0 {
 		log.Fatal("Falta JWT_SECRET en .env")
 	}

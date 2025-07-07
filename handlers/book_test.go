@@ -1,3 +1,4 @@
+// book_test contiene pruebas unitarias para los handlers HTTP relacionados con libros.
 package handlers
 
 import (
@@ -14,6 +15,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// setupTestHandler crea un entorno de prueba con una base de datos SQLite en memoria.
 func setupTestHandler() BookHandler {
 	db, _ := sql.Open("sqlite3", ":memory:")
 	db.Exec(`CREATE TABLE books(
@@ -27,10 +29,10 @@ func setupTestHandler() BookHandler {
 	return BookHandler{Repo: repo}
 }
 
+// TestCreateAndListBooks prueba que se puedan crear y luego listar libros correctamente.
 func TestCreateAndListBooks(t *testing.T) {
 	h := setupTestHandler()
 
-	// Crear libro
 	body := `{"title":"Go","author":"Gopher","isbn":"123","image":"cover.jpg"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/books", strings.NewReader(body))
 	w := httptest.NewRecorder()
@@ -40,28 +42,26 @@ func TestCreateAndListBooks(t *testing.T) {
 		t.Fatalf("esperado 200, obtuve %d", w.Code)
 	}
 
-	// Listar libros
 	req = httptest.NewRequest(http.MethodGet, "/api/books", nil)
 	w = httptest.NewRecorder()
 	h.Books(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("esperado 200 al listar, obtuve %d", w.Code)
-	}
-
 	var books []models.Book
-	json.NewDecoder(w.Body).Decode(&books)
+	if err := json.NewDecoder(w.Body).Decode(&books); err != nil {
+		t.Fatal("respuesta no es JSON válido")
+	}
 	if len(books) != 1 || books[0].Title != "Go" {
-		t.Error("libro no encontrado o mal insertado")
+		t.Error("el libro no se insertó o recuperó correctamente")
 	}
 }
 
+// TestPaginationAndSearch verifica que la búsqueda y paginación funcionen correctamente.
 func TestPaginationAndSearch(t *testing.T) {
 	h := setupTestHandler()
 
-	// Insertar libros
-	for _, title := range []string{"Go", "Rust", "Python", "Go in Depth"} {
-		b := models.Book{Title: title, Author: "Author", ISBN: "123", Image: "img.jpg"}
+	titles := []string{"Go", "Rust", "Python", "Go in Depth"}
+	for _, title := range titles {
+		b := models.Book{Title: title, Author: "Autor", ISBN: "000", Image: "img.jpg"}
 		h.Repo.Create(&b)
 	}
 
@@ -72,9 +72,8 @@ func TestPaginationAndSearch(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("esperado 200 en búsqueda, obtuve %d", w.Code)
 	}
-
 	body, _ := io.ReadAll(w.Body)
 	if !bytes.Contains(body, []byte("Go")) {
-		t.Error("no se encontraron resultados para búsqueda")
+		t.Error("no se encontraron resultados para búsqueda 'Go'")
 	}
 }

@@ -9,25 +9,27 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
+// Router configura las rutas de la aplicación web y retorna el enrutador principal.
 func Router() http.Handler {
 	mux := http.NewServeMux()
 
+	// Conexión a la base de datos
 	sqlDB := db.Open()
 	repo := models.BookRepository{DB: sqlDB}
-	bookH := handlers.BookHandler{Repo: repo}
+	bookHandler := handlers.BookHandler{Repo: repo}
 
-	// Login público
-	mux.HandleFunc("/api/login", handlers.Login)
-
-	// Protegido con middleware JWT
-	mux.Handle("/api/books", middlewares.AuthMiddleware(http.HandlerFunc(bookH.Books)))
-	mux.Handle("/api/books/", middlewares.AuthMiddleware(http.HandlerFunc(bookH.Book)))
-	mux.Handle("/api/upload", middlewares.AuthMiddleware(http.HandlerFunc(handlers.UploadImage)))
+	// Rutas API
+	mux.HandleFunc("/api/books", bookHandler.Books)
+	mux.HandleFunc("/api/books/", bookHandler.Book)
+	mux.HandleFunc("/api/upload", handlers.UploadImage)
 
 	// Archivos estáticos
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	fs := http.FileServer(http.Dir("./static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	// Redirección a la página principal
 	mux.Handle("/", http.RedirectHandler("/static/index.html", http.StatusTemporaryRedirect))
 
-	return middlewares.LoggerMiddleware(mux)
+	// Middleware de autenticación aplicado al router
+	return middlewares.AuthMiddleware(mux)
 }
