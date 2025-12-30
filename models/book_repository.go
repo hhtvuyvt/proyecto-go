@@ -75,3 +75,23 @@ func (r BookRepository) Count(search string) (int, error) {
 	err := r.DB.QueryRow(query, args...).Scan(&count)
 	return count, err
 }
+
+// Update actualiza los datos de un libro existente.
+// Retorna error si el libro no existe o si ocurre un problema en la BD.
+func (r BookRepository) Update(id int, b *Book) error {
+	res, err := r.DB.Exec(
+		`UPDATE books 
+		 SET title = ?, author = ?, isbn = ?, image = ?
+		 WHERE id = ?`,
+		b.Title, b.Author, b.ISBN, b.Image, id,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}

@@ -1,175 +1,76 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tienda de Libros</title>
+
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body>
+
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Tienda&nbsp;de&nbsp;Libros</a>
+      <a class="navbar-brand" href="#">Tienda de Libros</a>
     </div>
   </nav>
 
   <div class="container my-4">
-    <!-- Login -->
-    <h2>Iniciar Sesión</h2>
-    <form id="login-form" class="row g-3 mb-4">
-      <div class="col-md-4">
-        <input type="text" class="form-control" id="user" placeholder="Usuario" value="admin" required>
-      </div>
-      <div class="col-md-4">
-        <input type="password" class="form-control" id="pass" placeholder="Contraseña" value="1234" required>
-      </div>
-      <div class="col-md-4">
-        <button type="submit" class="btn btn-primary">Login</button>
-      </div>
-    </form>
 
     <!-- Formulario -->
-    <h2>Agregar Libro</h2>
-    <form id="book-form" class="row g-3" enctype="multipart/form-data">
+    <h2 class="mb-3">Agregar / Editar Libro</h2>
+    <form id="book-form" class="row g-3">
       <div class="col-md-6">
         <label for="titulo" class="form-label">Título</label>
         <input type="text" class="form-control" id="titulo" required>
       </div>
+
       <div class="col-md-6">
         <label for="autor" class="form-label">Autor</label>
         <input type="text" class="form-control" id="autor" required>
       </div>
+
       <div class="col-md-4">
         <label for="isbn" class="form-label">ISBN</label>
         <input type="text" class="form-control" id="isbn" required>
       </div>
+
       <div class="col-md-8">
-        <label class="form-label">Portada (archivo o URL)</label>
-        <input type="file" class="form-control" id="imagen-archivo">
-        <input type="url" class="form-control mt-2" id="imagen-url" placeholder="o pega una URL...">
+        <label for="imagen" class="form-label">URL de la imagen</label>
+        <input type="url" class="form-control" id="imagen" placeholder="https://..." required>
       </div>
+
       <div class="col-12">
         <button type="submit" class="btn btn-success">Agregar</button>
       </div>
     </form>
 
     <hr class="my-4">
-    <h2>Catálogo</h2>
+
+    <!-- Catálogo -->
+    <h2 class="mb-3">Catálogo</h2>
     <div id="book-list" class="row gy-4"></div>
+
   </div>
 
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- App JS -->
   <script>
     const API_URL = "/api/books";
-    let token = localStorage.getItem("token");
+    let editingBookId = null;
 
-    // Login
-    document.getElementById('login-form').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const user = document.getElementById('user').value.trim();
-      const pass = document.getElementById('pass').value.trim();
-
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: user, password: pass })
-      });
-
-      if (!res.ok) {
-        alert("Login fallido");
-        return;
-      }
-
-      const data = await res.json();
-      token = data.token;
-      localStorage.setItem("token", token);
-      alert("Login exitoso ✔️");
-    });
-
-    // Agregar libro
-    document.getElementById('book-form').addEventListener('submit', async function (e) {
-      e.preventDefault();
-
-      let imageURL = document.getElementById('imagen-url').value.trim();
-      const fileInput = document.getElementById('imagen-archivo');
-
-      if (fileInput.files.length > 0) {
-        const formData = new FormData();
-        formData.append("image", fileInput.files[0]);
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          imageURL = json.url;
-        } else {
-          alert("Error subiendo imagen");
-          return;
-        }
-      }
-
-      const data = {
-        title: document.getElementById('titulo').value.trim(),
-        author: document.getElementById('autor').value.trim(),
-        isbn: document.getElementById('isbn').value.trim(),
-        image: imageURL || 'https://via.placeholder.com/150x220?text=Portada'
-      };
-
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      });
-
-      if (!res.ok) {
-        alert("Error creando libro");
-        return;
-      }
-
-      const book = await res.json();
-      addBookToDOM(book);
-      this.reset();
-    });
-
-    // Eliminar libro
-    document.getElementById('book-list').addEventListener('click', async function (e) {
-      if (!e.target.classList.contains('eliminar')) return;
-      const card = e.target.closest('[data-id]');
-      const id = card.dataset.id;
-
-      const res = await fetch(`${API_URL}/${id}`, {
-        method: 'DELETE',
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      if (res.ok) card.remove();
-    });
-
-    // Mostrar libros existentes
-    async function fetchBooks() {
-      const res = await fetch(API_URL, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      if (!res.ok) return;
-      const books = await res.json();
-      books.forEach(addBookToDOM);
-    }
-
+    // Renderiza un libro
     function addBookToDOM(book) {
       const col = document.createElement('div');
       col.className = 'col-sm-6 col-md-4 col-lg-3';
       col.dataset.id = book.id;
+
       col.innerHTML = `
         <div class="card h-100 shadow-sm">
           <img src="${book.image}" class="card-img-top" alt="${book.title}">
@@ -177,13 +78,104 @@
             <h5 class="card-title">${book.title}</h5>
             <p class="card-text mb-1"><strong>Autor:</strong> ${book.author}</p>
             <p class="card-text text-muted"><small>${book.isbn}</small></p>
-            <button class="btn btn-outline-danger mt-auto eliminar">Eliminar</button>
+
+            <div class="mt-auto d-flex gap-2">
+              <button class="btn btn-outline-primary btn-sm editar">Editar</button>
+              <button class="btn btn-outline-danger btn-sm eliminar">Eliminar</button>
+            </div>
           </div>
-        </div>`;
+        </div>
+      `;
+
       document.getElementById('book-list').appendChild(col);
     }
 
+    // Cargar libros
+    async function fetchBooks() {
+      const res = await fetch(API_URL);
+      if (!res.ok) return;
+      const books = await res.json();
+      books.forEach(addBookToDOM);
+    }
+
+    // Crear o editar libro
+    document.getElementById('book-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const data = {
+        title: document.getElementById('titulo').value.trim(),
+        author: document.getElementById('autor').value.trim(),
+        isbn: document.getElementById('isbn').value.trim(),
+        image: document.getElementById('imagen').value.trim()
+          || 'https://via.placeholder.com/150x220?text=Portada'
+      };
+
+      let url = API_URL;
+      let method = 'POST';
+
+      if (editingBookId) {
+        url = `${API_URL}/${editingBookId}`;
+        method = 'PUT';
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!res.ok) return;
+
+      // Reset UI
+      document.getElementById('book-list').innerHTML = '';
+      editingBookId = null;
+      this.reset();
+      document.querySelector('#book-form button').innerText = 'Agregar';
+
+      fetchBooks();
+    });
+
+    // Delegación de eventos (editar / eliminar)
+    document.getElementById('book-list').addEventListener('click', async function (e) {
+
+      // Eliminar
+      if (e.target.classList.contains('eliminar')) {
+        const card = e.target.closest('[data-id]');
+        const id = card.dataset.id;
+
+        const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        if (res.ok) card.remove();
+        return;
+      }
+
+      // Editar
+      if (e.target.classList.contains('editar')) {
+        const card = e.target.closest('[data-id]');
+        const id = card.dataset.id;
+
+        document.getElementById('titulo').value =
+          card.querySelector('.card-title').innerText;
+
+        document.getElementById('autor').value =
+          card.querySelector('.card-text strong')
+            .parentElement.innerText.replace('Autor: ', '');
+
+        document.getElementById('isbn').value =
+          card.querySelector('small').innerText;
+
+        document.getElementById('imagen').value =
+          card.querySelector('img').src;
+
+        editingBookId = id;
+        document.querySelector('#book-form button').innerText = 'Guardar cambios';
+        document.getElementById('titulo').focus();
+      }
+    });
+
+    // Init
     fetchBooks();
   </script>
+
 </body>
+
 </html>
