@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/hhtvuyvt/proyecto-go/handlers"
 	"github.com/hhtvuyvt/proyecto-go/internal/db"
@@ -13,39 +14,37 @@ import (
 func Router() http.Handler {
 	mux := http.NewServeMux()
 
-	// Base de datos y repositorio
+	// Base de datos
 	sqlDB := db.Open()
 	repo := models.BookRepository{DB: sqlDB}
 	bookHandler := handlers.BookHandler{Repo: repo}
+
+	// JWT secret (inyectado)
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 
 	// =========================
 	// 🌐 RUTAS PÚBLICAS
 	// =========================
 
-	// Listar libros (GET)
 	mux.HandleFunc("/api/books", bookHandler.Books)
 
-	// Archivos estáticos
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	// Página principal
 	mux.Handle("/", http.RedirectHandler("/static/index.html", http.StatusTemporaryRedirect))
 
 	// =========================
 	// 🔐 RUTAS PROTEGIDAS
 	// =========================
 
-	// Crear / Editar / Eliminar libro
 	mux.Handle(
 		"/api/books/",
-		middlewares.AuthMiddleware(http.HandlerFunc(bookHandler.Book)),
+		middlewares.AuthMiddleware(jwtKey, http.HandlerFunc(bookHandler.Book)),
 	)
 
-	// Subida de imágenes
 	mux.Handle(
 		"/api/upload",
-		middlewares.AuthMiddleware(http.HandlerFunc(handlers.UploadImage)),
+		middlewares.AuthMiddleware(jwtKey, http.HandlerFunc(handlers.UploadImage)),
 	)
 
 	return mux
