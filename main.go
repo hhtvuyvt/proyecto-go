@@ -5,24 +5,47 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/hhtvuyvt/proyecto-go/routes"
 	"github.com/joho/godotenv"
+
+	"github.com/hhtvuyvt/proyecto-go/internal/db"
+	"github.com/hhtvuyvt/proyecto-go/models"
+	"github.com/hhtvuyvt/proyecto-go/routes"
 )
 
-// / Punto de entrada de la aplicación.
-// / Carga el archivo .env, configura el puerto y arranca el servidor HTTP.
 func main() {
+	// Cargar variables de entorno
 	if err := godotenv.Load(); err != nil {
-		log.Println("Advertencia: no se pudo cargar .env")
+		log.Println("No se encontró .env, usando variables del sistema")
 	}
 
+	// Configuración
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	log.Printf("Servidor en http://localhost:%s", port)
 
-	if err := http.ListenAndServe(":"+port, routes.Router()); err != nil {
-		log.Fatal(err)
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET no configurado")
 	}
+
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		log.Fatal("DB_PATH no configurado")
+	}
+
+	// Base de datos
+	sqlDB := db.Open(dbPath)
+
+	// Repositorios
+	bookRepo := models.BookRepository{DB: sqlDB}
+
+	// Router con dependencias inyectadas
+	router := routes.Router(routes.RouterConfig{
+		BookRepo: bookRepo,
+		JWTKey:   []byte(jwtSecret),
+	})
+
+	log.Printf("Servidor en http://localhost:%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
