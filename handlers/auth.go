@@ -53,5 +53,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"token": tokenStr})
+	if err := json.NewEncoder(w).Encode(map[string]string{"token": tokenStr}); err != nil {
+        log.Printf("Error codificando JSON: %v", err) // ¡Esto te salva la vida en producción!
+        http.Error(w, "error al generar respuesta", http.StatusInternalServerError)
+        return
+    }
 }
