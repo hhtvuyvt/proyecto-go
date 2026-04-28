@@ -1,0 +1,94 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 📥 Clonar repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # =========================
+      # 🟦 BACKEND (Go)
+      # =========================
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Run linter (Go)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+      - name: Run tests with coverage
+        run: go test ./... -coverprofile=coverage.out
+
+      - name: Show coverage
+        run: go tool cover -func=coverage.out
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+
+      - name: Build backend
+        run: go build ./...
+
+      # =========================
+      # 🟨 FRONTEND (HTML)
+      # =========================
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install HTMLHint
+        run: npm install -g htmlhint
+
+      - name: Lint HTML
+        run: htmlhint "static/**/*.html"
+
+      # =========================
+      # 🧪 E2E (Playwright)
+      # =========================
+
+      - name: Install Node deps
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: npx playwright test
+
+      # =========================
+      # 🚨 Coverage mínimo
+      # =========================
+
+      - name: Check coverage
+        run: |
+          total=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
+          echo "Coverage: $total%"
+          min=60
+          awk "BEGIN {exit !($total >= $min)}"
