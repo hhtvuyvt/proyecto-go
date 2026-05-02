@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 )
 
-// UploadImage maneja la subida de imágenes
+// UploadImage permite subir imágenes al servidor.
 func UploadImage(w http.ResponseWriter, r *http.Request) {
+
 	file, header, err := r.FormFile("image")
 	if err != nil {
 		http.Error(w, "archivo inválido", http.StatusBadRequest)
@@ -26,7 +27,7 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 	defer dst.Close()
 
 	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "error al guardar archivo", http.StatusInternalServerError)
+		http.Error(w, "error guardando archivo", http.StatusInternalServerError)
 		return
 	}
 
