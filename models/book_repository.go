@@ -4,10 +4,24 @@ import (
 	"database/sql"
 )
 
-// BookRepository maneja el acceso a la base de datos.
+// BookRepositoryInterface define el contrato del repositorio.
+// Permite desacoplar la lógica de almacenamiento del resto del sistema.
+type BookRepositoryInterface interface {
+	GetAll() ([]Book, error)
+	GetByID(id int) (Book, error)
+	Create(book *Book) error
+	Update(book *Book) error
+	Delete(id int) error
+}
+
+// BookRepository implementa BookRepositoryInterface usando SQL.
 type BookRepository struct {
 	DB *sql.DB
 }
+
+// 🔥 COMPROBACIÓN EN TIEMPO DE COMPILACIÓN
+// Si algo no coincide → error inmediato
+var _ BookRepositoryInterface = (*BookRepository)(nil)
 
 // GetAll devuelve todos los libros.
 func (r BookRepository) GetAll() ([]Book, error) {
