@@ -9,13 +9,14 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-// BookHandler maneja las peticiones relacionadas con libros
+// BookHandler maneja las peticiones de libros.
 type BookHandler struct {
-	Repo models.BookRepositoryInterface
+	Repo models.BookRepository
 }
 
-// Books maneja GET (listar) y POST (crear)
+// Books maneja GET (listar) y POST (crear).
 func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
+
 	switch r.Method {
 
 	case http.MethodGet:
@@ -26,12 +27,13 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := json.NewEncoder(w).Encode(books); err != nil {
-			http.Error(w, "error al listar libros", http.StatusInternalServerError)
+			http.Error(w, "error al responder", http.StatusInternalServerError)
 			return
 		}
 
 	case http.MethodPost:
 		var b models.Book
+
 		if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
 			http.Error(w, "datos inválidos", http.StatusBadRequest)
 			return
@@ -52,8 +54,9 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Book maneja GET, PUT y DELETE por ID
+// Book maneja GET, PUT y DELETE.
 func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
+
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/books/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -71,17 +74,20 @@ func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := json.NewEncoder(w).Encode(book); err != nil {
-			http.Error(w, "error al obtener libro", http.StatusInternalServerError)
+			http.Error(w, "error al responder", http.StatusInternalServerError)
 			return
 		}
 
 	case http.MethodPut:
 		var b models.Book
+
 		if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
 			http.Error(w, "datos inválidos", http.StatusBadRequest)
 			return
 		}
-		b.ID = id
+
+		// 🔥 FIX REAL
+		b.ID = int64(id)
 
 		if err := h.Repo.Update(&b); err != nil {
 			http.Error(w, "error actualizando libro", http.StatusInternalServerError)
