@@ -9,12 +9,13 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-// BookHandler maneja las peticiones de libros.
+// BookHandler maneja las peticiones HTTP relacionadas con libros.
+// Ahora depende de una interfaz (inyección de dependencias).
 type BookHandler struct {
-	Repo models.BookRepository
+	Repo models.BookRepositoryInterface
 }
 
-// Books maneja GET (listar) y POST (crear).
+// Books maneja GET y POST.
 func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
@@ -86,7 +87,6 @@ func (h BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// 🔥 FIX REAL
 		b.ID = int64(id)
 
 		if err := h.Repo.Update(&b); err != nil {
