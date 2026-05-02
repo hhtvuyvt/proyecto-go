@@ -1,48 +1,34 @@
-// UploadImage maneja la subida de archivos a través de /api/upload.
-// Solo permite archivos de imagen y responde con la URL pública del archivo.
 package handlers
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 )
 
-// UploadImage recibe un archivo por formulario y lo guarda en la carpeta /uploads.
+// UploadImage maneja la subida de imágenes
 func UploadImage(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "archivo demasiado grande", http.StatusBadRequest)
-		return
-	}
 	file, header, err := r.FormFile("image")
 	if err != nil {
-		http.Error(w, "no se recibió el archivo", http.StatusBadRequest)
+		http.Error(w, "archivo inválido", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
-	contentType := header.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "image/") {
-		http.Error(w, "solo se permiten imágenes", http.StatusBadRequest)
-		return
-	}
+	dstPath := filepath.Join("uploads", header.Filename)
 
-	filename := strconv.FormatInt(time.Now().UnixNano(), 10) + filepath.Ext(header.Filename)
-	path := filepath.Join("uploads", filename)
-
-	dst, err := os.Create(path)
+	dst, err := os.Create(dstPath)
 	if err != nil {
-		http.Error(w, "no se pudo guardar el archivo", http.StatusInternalServerError)
+		http.Error(w, "error creando archivo", http.StatusInternalServerError)
 		return
 	}
 	defer dst.Close()
-	io.Copy(dst, file)
 
-	url := "/uploads/" + filename
-	json.NewEncoder(w).Encode(map[string]string{"url": url})
+	if _, err := io.Copy(dst, file); err != nil {
+		http.Error(w, "error al guardar archivo", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
