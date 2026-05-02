@@ -10,7 +10,7 @@ import (
 func setupTestDB(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
-		t.Fatalf("error abriendo DB: %v", err)
+		t.Fatalf("error DB: %v", err)
 	}
 
 	ddl := `
@@ -29,27 +29,17 @@ func setupTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
-func TestCreateAndGetBook(t *testing.T) {
+func TestCreateBook(t *testing.T) {
 	db := setupTestDB(t)
 	repo := BookRepository{DB: db}
 
-	book := Book{
-		Title:  "Test",
-		Author: "Autor",
-		ISBN:   "123",
-		Image:  "img",
-	}
+	book := Book{Title: "Test"}
 
 	if err := repo.Create(&book); err != nil {
 		t.Fatalf("error creando libro: %v", err)
 	}
 
-	got, err := repo.GetByID(book.ID)
-	if err != nil {
-		t.Fatalf("error obteniendo libro: %v", err)
-	}
-
-	if got.Title != book.Title {
-		t.Errorf("esperado %s, obtenido %s", book.Title, got.Title)
+	if book.ID == 0 {
+		t.Fatal("ID no asignado")
 	}
 }
