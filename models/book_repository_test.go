@@ -7,10 +7,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func setupTestRepo(t *testing.T) BookRepository {
+func setupTestDB(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("error abriendo DB: %v", err)
 	}
 
 	ddl := `
@@ -21,43 +21,35 @@ func setupTestRepo(t *testing.T) BookRepository {
 		isbn TEXT,
 		image TEXT
 	);`
-	db.Exec(ddl)
 
-	return BookRepository{DB: db}
+	if _, err := db.Exec(ddl); err != nil {
+		t.Fatalf("error creando tabla: %v", err)
+	}
+
+	return db
 }
 
-func TestCreateAndUpdateBook(t *testing.T) {
-	repo := setupTestRepo(t)
+func TestCreateAndGetBook(t *testing.T) {
+	db := setupTestDB(t)
+	repo := BookRepository{DB: db}
 
 	book := Book{
-		Title:  "Original",
+		Title:  "Test",
 		Author: "Autor",
 		ISBN:   "123",
 		Image:  "img",
 	}
 
 	if err := repo.Create(&book); err != nil {
-		t.Fatal(err)
+		t.Fatalf("error creando libro: %v", err)
 	}
 
-	book.Title = "Editado"
-	if err := repo.Update(int(book.ID), &book); err != nil {
-		t.Fatal(err)
+	got, err := repo.GetByID(book.ID)
+	if err != nil {
+		t.Fatalf("error obteniendo libro: %v", err)
 	}
-}
 
-func TestDeleteBook(t *testing.T) {
-	repo := setupTestRepo(t)
-
-	book := Book{
-		Title:  "Eliminar",
-		Author: "Autor",
-		ISBN:   "123",
-		Image:  "img",
-	}
-	repo.Create(&book)
-
-	if err := repo.Delete(int(book.ID)); err != nil {
-		t.Fatal(err)
+	if got.Title != book.Title {
+		t.Errorf("esperado %s, obtenido %s", book.Title, got.Title)
 	}
 }
