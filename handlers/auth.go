@@ -1,57 +1,59 @@
-// auth.go define el endpoint de autenticación de usuarios.
-// Retorna un token JWT para acceso autorizado a rutas protegidas.
 package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
+// AuthMiddleware valida el token JWT en las peticiones protegidas.
+func AuthMiddleware(next http.Handler) http.Handler {
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
+	if len(jwtKey) == 0 {
+		log.Fatal("Falta JWT_SECRET en .env")
+	}
 
-// Credentials representa los datos enviados por el cliente en el login.
-type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if !strings.HasPrefix(auth, "Bearer ") {
+			http.Error(w, "token requerido", http.StatusUnauthorized)
+			return
+		}
+
+		tokenStr := strings.TrimPrefix(auth, "Bearer ")
+
+		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		})
+		if err != nil || !token.Valid {
+			http.Error(w, "token inválido", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
-// Claims son los datos que se almacenan en el token JWT.
-type Claims struct {
-	Username string `json:"username"`
-	jwt.RegisteredClaims
-}
-
-// LoginHandler maneja POST /api/login y responde con un JWT si las credenciales son válidas.
+// LoginHandler genera un token simple (demo)
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var creds Credentials
-	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-		http.Error(w, "credenciales inválidas", http.StatusBadRequest)
-		return
-	}
+	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 
-	// Autenticación simplificada (puede ser reemplazada por consulta a BD).
-	if creds.Username != "admin" || creds.Password != "1234" {
-		http.Error(w, "usuario o contraseña incorrectos", http.StatusUnauthorized)
-		return
-	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user": "admin",
+	})
 
-	expiration := time.Now().Add(1 * time.Hour)
-	claims := &Claims{
-		Username: creds.Username,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expiration),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString(jwtKey)
 	if err != nil {
 		http.Error(w, "error generando token", http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"token": tokenStr})
+	if err := json.NewEncoder(w).Encode(map[string]string{"token": tokenStr}); err != nil {
+		http.Error(w, "error al generar respuesta", http.StatusInternalServerError)
+		return
+	}
 }
