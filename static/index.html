@@ -7,31 +7,63 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Biblioteca</title>
+  <title>Proyecto Go - Biblioteca</title>
 
 
   <style>
 
-    body{
+    body {
       font-family: Arial, sans-serif;
-      margin:40px;
+      margin: 40px;
+      background: #f5f5f5;
     }
 
 
-    .book{
-      border:1px solid #ccc;
+    .container {
+      max-width: 800px;
+      margin:auto;
+      background:white;
+      padding:25px;
+      border-radius:10px;
+    }
+
+
+    input {
+      display:block;
+      width:100%;
+      margin:8px 0;
+      padding:8px;
+    }
+
+
+    button {
+
+      padding:8px 12px;
+      margin:5px;
+
+      cursor:pointer;
+    }
+
+
+    .book {
+
+      border:1px solid #ddd;
+      margin:10px 0;
       padding:15px;
-      margin:10px;
       border-radius:8px;
+
     }
 
 
-    button{
-      margin-right:5px;
-    }
+    #status {
 
+      padding:10px;
+      margin-bottom:15px;
+
+    }
 
   </style>
+
 
 </head>
 
@@ -39,117 +71,113 @@
 <body>
 
 
-<h1>📚 Biblioteca</h1>
+<div class="container">
 
 
-<h2>Agregar libro</h2>
+  <h1>📚 Biblioteca</h1>
 
 
-<input id="title" placeholder="Título">
-
-<input id="author" placeholder="Autor">
-
-<input id="isbn" placeholder="ISBN">
-<h2>Agregar libro</h2>
-
-
-<label for="title">
-  Título:
-</label>
-
-<input
-        id="title"
-        name="title"
-        placeholder="Título"
->
+  <div id="status">
+    Cargando...
+  </div>
 
 
 
-<label for="author">
-  Autor:
-</label>
-
-<input
-        id="author"
-        name="author"
-        placeholder="Autor"
->
+  <h2>Agregar libro</h2>
 
 
+  <label>
+    Título
+  </label>
 
-<label for="isbn">
-  ISBN:
-</label>
-
-<input
-        id="isbn"
-        name="isbn"
-        placeholder="ISBN"
->
-
-
-<button onclick="createBook()">
-  Agregar
-</button>
-
-<button onclick="createBook()">
-  Agregar
-</button>
+  <input id="title">
 
 
 
-<h2>Libros</h2>
+  <label>
+    Autor
+  </label>
+
+  <input id="author">
 
 
-<div id="books"></div>
+
+  <label>
+    ISBN
+  </label>
+
+  <input id="isbn">
+
+
+
+  <button onclick="createBook()">
+    Agregar libro
+  </button>
+
+
+
+
+  <h2>Libros publicados</h2>
+
+
+  <div id="books">
+
+  </div>
+
+
+
+</div>
+
+
 
 
 
 <script>
 
 
-  // ============================
-  // TOKEN JWT
-  // ============================
-
-
   let jwtToken = "";
 
 
-  // Obtiene token del backend
+
+
+  // =====================
+  // AUTENTICACION
+  // =====================
+
+
   async function loadToken(){
 
-    try{
 
-      const response =
-              await fetch("/api/login");
-
-
-      const data =
-              await response.json();
+    const response =
+            await fetch("/api/login");
 
 
-      jwtToken = data.token;
+    if(!response.ok){
 
-
-    }catch(error){
-
-      console.error(
-              "No se pudo obtener token",
-              error
+      throw new Error(
+              "No se pudo obtener token"
       );
 
     }
+
+
+    const data =
+            await response.json();
+
+
+    jwtToken =
+            data.token;
+
+
 
   }
 
 
 
 
-
-  // ============================
+  // =====================
   // LIBROS
-  // ============================
+  // =====================
 
 
 
@@ -158,6 +186,7 @@
 
     const response =
             await fetch("/api/books");
+
 
 
     const books =
@@ -169,6 +198,7 @@
             document.getElementById("books");
 
 
+
     container.innerHTML="";
 
 
@@ -177,6 +207,7 @@
 
 
       container.innerHTML += `
+
 
         <div class="book">
 
@@ -198,9 +229,11 @@
             </p>
 
 
+
             <button onclick="editBook(${book.id})">
                 Editar
             </button>
+
 
 
             <button onclick="deleteBook(${book.id})">
@@ -208,7 +241,9 @@
             </button>
 
 
+
         </div>
+
 
         `;
 
@@ -221,19 +256,16 @@
 
 
 
-
-
-
-  // ============================
+  // =====================
   // CREAR
-  // ============================
+  // =====================
 
 
 
   async function createBook(){
 
 
-    const book={
+    const book = {
 
 
       title:
@@ -251,26 +283,40 @@
 
 
 
-    await fetch(
-            "/api/books",
-            {
 
-              method:"POST",
+    const response =
+            await fetch(
+                    "/api/books",
+                    {
 
-
-              headers:{
-
-                "Content-Type":
-                        "application/json"
-
-              },
+                      method:"POST",
 
 
-              body:
-                      JSON.stringify(book)
+                      headers:{
 
-            }
-    );
+                        "Content-Type":
+                                "application/json"
+
+                      },
+
+
+                      body:
+                              JSON.stringify(book)
+
+                    }
+            );
+
+
+
+    if(!response.ok){
+
+      alert(
+              "Error creando libro"
+      );
+
+      return;
+
+    }
 
 
 
@@ -282,9 +328,9 @@
 
 
 
-  // ============================
+  // =====================
   // BORRAR
-  // ============================
+  // =====================
 
 
 
@@ -297,33 +343,42 @@
                     "/api/books/"+id,
                     {
 
+
                       method:"DELETE",
 
 
                       headers:{
 
+
                         "Authorization":
                                 "Bearer "+jwtToken
 
+
                       }
+
 
                     }
             );
 
 
 
+
     if(!response.ok){
 
       alert(
-              "No se pudo borrar el libro"
+              "Error borrando libro"
       );
 
       return;
+
     }
 
 
 
+
     loadBooks();
+
+
 
   }
 
@@ -333,9 +388,9 @@
 
 
 
-  // ============================
+  // =====================
   // EDITAR
-  // ============================
+  // =====================
 
 
 
@@ -345,21 +400,28 @@
 
     const title =
             prompt(
-                    "Nuevo título:"
+                    "Nuevo titulo:"
             );
 
 
+
     if(!title){
+
       return;
+
     }
 
 
 
-    const book={
+
+    const book = {
+
 
       title:title
 
+
     };
+
 
 
 
@@ -385,18 +447,22 @@
                       },
 
 
+
                       body:
                               JSON.stringify(book)
+
 
                     }
             );
 
 
 
+
+
     if(!response.ok){
 
       alert(
-              "No se pudo editar"
+              "Error editando libro"
       );
 
       return;
@@ -408,33 +474,65 @@
     loadBooks();
 
 
+
   }
 
 
 
 
 
-  // ============================
+
+  // =====================
   // INICIO
-  // ============================
+  // =====================
 
 
-  window.onload =
-          async function(){
+
+  window.onload = async ()=>{
 
 
-            await loadToken();
+    try {
 
 
-            await loadBooks();
+      await loadToken();
 
 
-          };
+      await loadBooks();
+
+
+
+      document.getElementById(
+              "status"
+      ).innerHTML =
+              "Sistema conectado";
+
+
+
+    }catch(error){
+
+
+      console.error(error);
+
+
+      document.getElementById(
+              "status"
+      ).innerHTML =
+              "Error conectando con servidor";
+
+
+    }
+
+
+
+  };
+
 
 
 </script>
 
 
+
 </body>
+
 
 </html>

@@ -8,13 +8,20 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-// RouterConfig agrupa todas las dependencias del router.
+// RouterConfig agrupa todas las dependencias necesarias
+// para construir el router.
+//
+// BookRepo:
+// repositorio encargado del acceso a libros.
+//
+// JWTKey:
+// clave usada para firmar y validar tokens JWT.
 type RouterConfig struct {
 	BookRepo models.BookRepository
 	JWTKey   []byte
 }
 
-// Router configura las rutas de la aplicación.
+// Router configura todas las rutas HTTP de la aplicación.
 func Router(cfg RouterConfig) http.Handler {
 
 	mux := http.NewServeMux()
@@ -24,39 +31,65 @@ func Router(cfg RouterConfig) http.Handler {
 			Repo: cfg.BookRepo,
 		}
 
-	// 🌐 RUTAS PÚBLICAS
+	// ==========================
+	// RUTAS PÚBLICAS
+	// ==========================
 
+	// Obtener y crear libros.
+	//
+	// GET  /api/books
+	// POST /api/books
 	mux.HandleFunc(
 		"/api/books",
 		bookHandler.Books,
 	)
 
-	// Login público
-	// Genera JWT para usar rutas protegidas
+	// Login público.
+	//
+	// Genera un JWT que el frontend
+	// usará para operaciones protegidas.
 	mux.HandleFunc(
 		"/api/login",
 		handlers.LoginHandler,
 	)
 
-	// 🔐 RUTAS PROTEGIDAS
+	// ==========================
+	// RUTAS PROTEGIDAS
+	// ==========================
 
+	// Editar y borrar libros.
+	//
+	// PUT    /api/books/{id}
+	// DELETE /api/books/{id}
+	//
+	// Estas rutas requieren:
+	//
+	// Authorization:
+	// Bearer <token>
 	mux.Handle(
 		"/api/books/",
 		middlewares.AuthMiddleware(
 			cfg.JWTKey,
-			http.HandlerFunc(bookHandler.Book),
+			http.HandlerFunc(
+				bookHandler.Book,
+			),
 		),
 	)
 
+	// Subida de imágenes protegida.
 	mux.Handle(
 		"/api/upload",
 		middlewares.AuthMiddleware(
 			cfg.JWTKey,
-			http.HandlerFunc(handlers.UploadImage),
+			http.HandlerFunc(
+				handlers.UploadImage,
+			),
 		),
 	)
 
-	// Frontend
+	// ==========================
+	// ARCHIVOS ESTÁTICOS
+	// ==========================
 
 	fs :=
 		http.FileServer(
@@ -71,6 +104,7 @@ func Router(cfg RouterConfig) http.Handler {
 		),
 	)
 
+	// Entrada principal.
 	mux.Handle(
 		"/",
 		http.RedirectHandler(
