@@ -5,60 +5,29 @@
 
   <meta charset="UTF-8">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Proyecto Go - Biblioteca</title>
+  <title>Biblioteca</title>
 
 
   <style>
 
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-      background: #f5f5f5;
+    body{
+      font-family:Arial,sans-serif;
+      margin:40px;
     }
 
 
-    .container {
-      max-width: 800px;
-      margin:auto;
-      background:white;
-      padding:25px;
-      border-radius:10px;
-    }
+    .book{
 
-
-    input {
-      display:block;
-      width:100%;
-      margin:8px 0;
-      padding:8px;
-    }
-
-
-    button {
-
-      padding:8px 12px;
-      margin:5px;
-
-      cursor:pointer;
-    }
-
-
-    .book {
-
-      border:1px solid #ddd;
-      margin:10px 0;
+      border:1px solid #ccc;
       padding:15px;
-      border-radius:8px;
+      margin:10px;
 
     }
 
 
-    #status {
+    img{
 
-      padding:10px;
-      margin-bottom:15px;
+      max-width:150px;
 
     }
 
@@ -71,62 +40,47 @@
 <body>
 
 
-<div class="container">
+<h1>📚 Biblioteca</h1>
 
 
-  <h1>📚 Biblioteca</h1>
+<h2>Nuevo libro</h2>
 
 
-  <div id="status">
-    Cargando...
-  </div>
+<label>Título</label>
+
+<label for="title"></label><input id="title">
 
 
+<label>Autor</label>
 
-  <h2>Agregar libro</h2>
-
-
-  <label>
-    Título
-  </label>
-
-  <input id="title">
+<label for="author"></label><input id="author">
 
 
+<label>ISBN</label>
 
-  <label>
-    Autor
-  </label>
-
-  <input id="author">
+<label for="isbn"></label><input id="isbn">
 
 
+<label>Portada</label>
 
-  <label>
-    ISBN
-  </label>
-
-  <input id="isbn">
+<input
+        id="image"
+        type="file"
+        accept="image/*"
+>
 
 
 
-  <button onclick="createBook()">
-    Agregar libro
-  </button>
+<button onclick="createBook()">
+  Agregar
+</button>
 
 
 
-
-  <h2>Libros publicados</h2>
-
-
-  <div id="books">
-
-  </div>
+<h2>Libros</h2>
 
 
-
-</div>
+<div id="books"></div>
 
 
 
@@ -135,39 +89,23 @@
 <script>
 
 
-  let jwtToken = "";
+  let jwtToken="";
 
-
-
-
-  // =====================
-  // AUTENTICACION
-  // =====================
 
 
   async function loadToken(){
 
 
-    const response =
+    const r =
             await fetch("/api/login");
 
 
-    if(!response.ok){
-
-      throw new Error(
-              "No se pudo obtener token"
-      );
-
-    }
-
-
     const data =
-            await response.json();
+            await r.json();
 
 
     jwtToken =
             data.token;
-
 
 
   }
@@ -175,78 +113,78 @@
 
 
 
-  // =====================
-  // LIBROS
-  // =====================
-
-
 
   async function loadBooks(){
 
 
-    const response =
+    const r =
             await fetch("/api/books");
 
 
-
     const books =
-            await response.json();
+            await r.json();
 
 
 
-    const container =
+    const box =
             document.getElementById("books");
 
 
 
-    container.innerHTML="";
+    box.innerHTML="";
 
 
 
     books.forEach(book=>{
 
 
-      container.innerHTML += `
+      box.innerHTML += `
 
 
-        <div class="book">
+<div class="book">
 
 
-            <h3>
-            ${book.title}
-            </h3>
+<h3>
+${book.title}
+</h3>
 
 
-            <p>
-            Autor:
-            ${book.author}
-            </p>
-
-
-            <p>
-            ISBN:
-            ${book.isbn}
-            </p>
+${book.image ?
+              `
+<img src="${book.image}" alt="portada del libro">
+`
+              :
+              ""
+      }
 
 
 
-            <button onclick="editBook(${book.id})">
-                Editar
-            </button>
+<p>
+${book.author}
+</p>
+
+
+<p>
+${book.isbn}
+</p>
 
 
 
-            <button onclick="deleteBook(${book.id})">
-                Borrar
-            </button>
+<button onclick="editBook(${book.id})">
+Editar
+</button>
+
+
+<button onclick="deleteBook(${book.id})">
+Borrar
+</button>
 
 
 
-        </div>
+</div>
 
 
-        `;
-
+`;
 
     });
 
@@ -256,16 +194,73 @@
 
 
 
-  // =====================
-  // CREAR
-  // =====================
-
 
 
   async function createBook(){
 
 
-    const book = {
+    let image="";
+
+
+
+    const file =
+            document.getElementById("image")
+                    .files[0];
+
+
+
+    if(file){
+
+
+      const form =
+              new FormData();
+
+
+
+      form.append(
+              "image",
+              file
+      );
+
+
+
+      const upload =
+              await fetch(
+                      "/api/upload",
+                      {
+
+                        method:"POST",
+
+                        headers:{
+
+                          "Authorization":
+                                  "Bearer "+jwtToken
+
+                        },
+
+
+                        body:form
+
+
+                      });
+
+
+
+      const data =
+              await upload.json();
+
+
+
+      image =
+              data.path;
+
+
+    }
+
+
+
+
+    const book={
 
 
       title:
@@ -277,202 +272,121 @@
 
 
       isbn:
-      document.getElementById("isbn").value
+      document.getElementById("isbn").value,
+
+
+      image:image
 
     };
 
 
 
 
-    const response =
-            await fetch(
-                    "/api/books",
-                    {
+    await fetch(
+            "/api/books",
+            {
 
-                      method:"POST",
+              method:"POST",
 
+              headers:{
 
-                      headers:{
+                "Content-Type":
+                        "application/json"
 
-                        "Content-Type":
-                                "application/json"
+              },
 
-                      },
+              body:
+                      JSON.stringify(book)
 
+            }
 
-                      body:
-                              JSON.stringify(book)
-
-                    }
-            );
+    );
 
 
 
-    if(!response.ok){
+    await loadBooks();
 
-      alert(
-              "Error creando libro"
-      );
-
-      return;
-
-    }
-
-
-
-    loadBooks();
 
   }
 
 
 
-
-
-  // =====================
-  // BORRAR
-  // =====================
 
 
 
   async function deleteBook(id){
 
 
+    await fetch(
+            "/api/books/"+id,
+            {
 
-    const response =
-            await fetch(
-                    "/api/books/"+id,
-                    {
+              method:"DELETE",
 
+              headers:{
 
-                      method:"DELETE",
+                "Authorization":
+                        "Bearer "+jwtToken
 
+              }
 
-                      headers:{
-
-
-                        "Authorization":
-                                "Bearer "+jwtToken
-
-
-                      }
+            });
 
 
-                    }
-            );
-
-
-
-
-    if(!response.ok){
-
-      alert(
-              "Error borrando libro"
-      );
-
-      return;
-
-    }
-
-
-
-
-    loadBooks();
-
-
+    await loadBooks();
 
   }
 
 
 
 
-
-
-
-  // =====================
-  // EDITAR
-  // =====================
 
 
 
   async function editBook(id){
 
 
-
     const title =
             prompt(
-                    "Nuevo titulo:"
+                    "Nuevo titulo"
             );
 
 
 
-    if(!title){
-
+    if(!title)
       return;
 
-    }
 
 
+    await fetch(
+            "/api/books/"+id,
+            {
+
+              method:"PUT",
+
+              headers:{
+
+                "Content-Type":
+                        "application/json",
+
+                "Authorization":
+                        "Bearer "+jwtToken
+
+              },
 
 
-    const book = {
+              body:
+                      JSON.stringify({
+
+                        title:title
+
+                      })
 
 
-      title:title
+            });
 
 
-    };
-
-
-
-
-    const response =
-            await fetch(
-                    "/api/books/"+id,
-                    {
-
-                      method:"PUT",
-
-
-                      headers:{
-
-
-                        "Content-Type":
-                                "application/json",
-
-
-                        "Authorization":
-                                "Bearer "+jwtToken
-
-
-                      },
-
-
-
-                      body:
-                              JSON.stringify(book)
-
-
-                    }
-            );
-
-
-
-
-
-    if(!response.ok){
-
-      alert(
-              "Error editando libro"
-      );
-
-      return;
-
-    }
-
-
-
-    loadBooks();
-
+    await loadBooks();
 
 
   }
@@ -482,54 +396,21 @@
 
 
 
-  // =====================
-  // INICIO
-  // =====================
+  window.onload =
+          async()=>{
 
 
-
-  window.onload = async ()=>{
-
-
-    try {
+            await loadToken();
 
 
-      await loadToken();
+            await loadBooks();
 
 
-      await loadBooks();
-
-
-
-      document.getElementById(
-              "status"
-      ).innerHTML =
-              "Sistema conectado";
-
-
-
-    }catch(error){
-
-
-      console.error(error);
-
-
-      document.getElementById(
-              "status"
-      ).innerHTML =
-              "Error conectando con servidor";
-
-
-    }
-
-
-
-  };
+          };
 
 
 
 </script>
-
 
 
 </body>

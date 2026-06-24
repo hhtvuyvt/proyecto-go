@@ -1,35 +1,131 @@
 package handlers
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 )
 
-// UploadImage permite subir imágenes al servidor.
-func UploadImage(w http.ResponseWriter, r *http.Request) {
+// UploadResponse representa la ruta pública
+// de la imagen subida.
+type UploadResponse struct {
+	Path string `json:"path"`
+}
 
-	file, header, err := r.FormFile("image")
+// UploadImage recibe una imagen,
+// la guarda en uploads/
+// y devuelve su ubicación.
+func UploadImage(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	if err := os.MkdirAll(
+		"uploads",
+		0755,
+	); err != nil {
+
+		http.Error(
+			w,
+			"error creando carpeta",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	file, header, err :=
+		r.FormFile("image")
+
 	if err != nil {
-		http.Error(w, "archivo inválido", http.StatusBadRequest)
+
+		http.Error(
+			w,
+			"archivo inválido",
+			http.StatusBadRequest,
+		)
+
 		return
 	}
-	defer file.Close()
 
-	dstPath := filepath.Join("uploads", header.Filename)
+	defer func() {
 
-	dst, err := os.Create(dstPath)
+		if err := file.Close(); err != nil {
+
+			return
+
+		}
+
+	}()
+
+	dstPath :=
+		filepath.Join(
+			"uploads",
+			header.Filename,
+		)
+
+	dst, err :=
+		os.Create(dstPath)
+
 	if err != nil {
-		http.Error(w, "error creando archivo", http.StatusInternalServerError)
+
+		http.Error(
+			w,
+			"error creando archivo",
+			http.StatusInternalServerError,
+		)
+
 		return
 	}
-	defer dst.Close()
 
-	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "error guardando archivo", http.StatusInternalServerError)
+	_, copyErr :=
+		io.Copy(
+			dst,
+			file,
+		)
+
+	closeErr :=
+		dst.Close()
+
+	if copyErr != nil {
+
+		http.Error(
+			w,
+			"error guardando archivo",
+			http.StatusInternalServerError,
+		)
+
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	if closeErr != nil {
+
+		http.Error(
+			w,
+			"error cerrando archivo",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
+	response :=
+		UploadResponse{
+			Path: "/uploads/" + header.Filename,
+		}
+
+	if err :=
+		json.NewEncoder(w).Encode(response); err != nil {
+
+		http.Error(
+			w,
+			"error respondiendo",
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
 }

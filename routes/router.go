@@ -8,21 +8,17 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-// RouterConfig agrupa todas las dependencias necesarias
-// para construir el router.
-//
-// BookRepo:
-// repositorio encargado del acceso a libros.
-//
-// JWTKey:
-// clave usada para firmar y validar tokens JWT.
+// RouterConfig agrupa dependencias del router.
 type RouterConfig struct {
 	BookRepo models.BookRepository
-	JWTKey   []byte
+
+	JWTKey []byte
 }
 
-// Router configura todas las rutas HTTP de la aplicación.
-func Router(cfg RouterConfig) http.Handler {
+// Router configura rutas HTTP.
+func Router(
+	cfg RouterConfig,
+) http.Handler {
 
 	mux := http.NewServeMux()
 
@@ -31,41 +27,24 @@ func Router(cfg RouterConfig) http.Handler {
 			Repo: cfg.BookRepo,
 		}
 
-	// ==========================
-	// RUTAS PÚBLICAS
-	// ==========================
+	// =====================
+	// PUBLICAS
+	// =====================
 
-	// Obtener y crear libros.
-	//
-	// GET  /api/books
-	// POST /api/books
 	mux.HandleFunc(
 		"/api/books",
 		bookHandler.Books,
 	)
 
-	// Login público.
-	//
-	// Genera un JWT que el frontend
-	// usará para operaciones protegidas.
 	mux.HandleFunc(
 		"/api/login",
 		handlers.LoginHandler,
 	)
 
-	// ==========================
-	// RUTAS PROTEGIDAS
-	// ==========================
+	// =====================
+	// PROTEGIDAS
+	// =====================
 
-	// Editar y borrar libros.
-	//
-	// PUT    /api/books/{id}
-	// DELETE /api/books/{id}
-	//
-	// Estas rutas requieren:
-	//
-	// Authorization:
-	// Bearer <token>
 	mux.Handle(
 		"/api/books/",
 		middlewares.AuthMiddleware(
@@ -76,7 +55,6 @@ func Router(cfg RouterConfig) http.Handler {
 		),
 	)
 
-	// Subida de imágenes protegida.
 	mux.Handle(
 		"/api/upload",
 		middlewares.AuthMiddleware(
@@ -87,11 +65,11 @@ func Router(cfg RouterConfig) http.Handler {
 		),
 	)
 
-	// ==========================
-	// ARCHIVOS ESTÁTICOS
-	// ==========================
+	// =====================
+	// ARCHIVOS
+	// =====================
 
-	fs :=
+	staticFiles :=
 		http.FileServer(
 			http.Dir("./static"),
 		)
@@ -100,11 +78,28 @@ func Router(cfg RouterConfig) http.Handler {
 		"/static/",
 		http.StripPrefix(
 			"/static/",
-			fs,
+			staticFiles,
 		),
 	)
 
-	// Entrada principal.
+	// Imágenes subidas
+	//
+	// Permite acceder a:
+	//
+	// /uploads/imagen.jpg
+	uploads :=
+		http.FileServer(
+			http.Dir("./uploads"),
+		)
+
+	mux.Handle(
+		"/uploads/",
+		http.StripPrefix(
+			"/uploads/",
+			uploads,
+		),
+	)
+
 	mux.Handle(
 		"/",
 		http.RedirectHandler(
