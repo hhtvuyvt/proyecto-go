@@ -32,20 +32,88 @@ Frontend → Handlers HTTP → Repositorios → Base de datos (SQLite)
 
 ---
 
-## 🗂️ Estructura del proyecto
+## 📁 Estructura del proyecto
 
+```text
 proyecto-go/
-├── data/
-├── handlers/
-├── internal/db/
-├── middlewares/
-├── models/
-├── routes/
-├── static/
-├── uploads/
-├── utils/
-├── main.go
-└── README.md
+│
+├── 📂 data/
+│   └── books.db
+│       └── Base de datos SQLite local
+│
+├── 📂 handlers/
+│   ├── auth.go
+│   │   └── Gestión de autenticación y JWT
+│   │
+│   ├── book.go
+│   │   └── Controladores HTTP de libros
+│   │
+│   ├── upload.go
+│   │   └── Manejo de subida de imágenes
+│   │
+│   └── book_test.go
+│       └── Tests de endpoints de libros
+│
+├── 📂 internal/
+│   └── 📂 db/
+│       └── db.go
+│           └── Configuración y conexión con SQLite
+│
+├── 📂 middlewares/
+│   ├── auth.go
+│   │   └── Middleware de validación JWT
+│   │
+│   └── middleware.go
+│       └── Middlewares generales HTTP
+│
+├── 📂 models/
+│   ├── book.go
+│   │   └── Modelo de datos Book
+│   │
+│   ├── book_repository.go
+│   │   └── Acceso a datos y operaciones CRUD
+│   │
+│   └── book_repository_test.go
+│       └── Tests del repositorio
+│
+├── 📂 routes/
+│   └── router.go
+│       └── Definición de rutas API
+│
+├── 📂 static/
+│   └── index.html
+│       └── Frontend principal
+│
+├── 📂 uploads/
+│   └── imagenes/
+│       └── Archivos subidos por usuarios
+│
+├── 📂 utils/
+│   └── sanitize.go
+│       └── Funciones auxiliares de limpieza de datos
+│
+├── 📄 main.go
+│   └── Punto de entrada de la aplicación
+│
+├── 📄 go.mod
+│   └── Dependencias del proyecto
+│
+├── 📄 go.sum
+│   └── Hashes de dependencias
+│
+├── 📄 .env
+│   └── Variables de entorno
+│
+├── 📄 .gitignore
+│   └── Archivos ignorados por Git
+│
+├── 📄 CHANGELOG.md
+│   └── Historial de cambios
+│
+└── 📄 README.md
+    └── Documentación del proyecto
+```
+
 
 ---
 
