@@ -16,26 +16,67 @@ type RouterConfig struct {
 
 // Router configura las rutas de la aplicación.
 func Router(cfg RouterConfig) http.Handler {
+
 	mux := http.NewServeMux()
 
-	bookHandler := handlers.BookHandler{Repo: cfg.BookRepo}
+	bookHandler :=
+		handlers.BookHandler{
+			Repo: cfg.BookRepo,
+		}
 
-	// 🌐 Rutas públicas
-	mux.HandleFunc("/api/books", bookHandler.Books)
+	// 🌐 RUTAS PÚBLICAS
 
-	fs := http.FileServer(http.Dir("./static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	mux.Handle("/", http.RedirectHandler("/static/index.html", http.StatusTemporaryRedirect))
+	mux.HandleFunc(
+		"/api/books",
+		bookHandler.Books,
+	)
 
-	// 🔐 Rutas protegidas
+	// Login público
+	// Genera JWT para usar rutas protegidas
+	mux.HandleFunc(
+		"/api/login",
+		handlers.LoginHandler,
+	)
+
+	// 🔐 RUTAS PROTEGIDAS
+
 	mux.Handle(
 		"/api/books/",
-		middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(bookHandler.Book)),
+		middlewares.AuthMiddleware(
+			cfg.JWTKey,
+			http.HandlerFunc(bookHandler.Book),
+		),
 	)
 
 	mux.Handle(
 		"/api/upload",
-		middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(handlers.UploadImage)),
+		middlewares.AuthMiddleware(
+			cfg.JWTKey,
+			http.HandlerFunc(handlers.UploadImage),
+		),
+	)
+
+	// Frontend
+
+	fs :=
+		http.FileServer(
+			http.Dir("./static"),
+		)
+
+	mux.Handle(
+		"/static/",
+		http.StripPrefix(
+			"/static/",
+			fs,
+		),
+	)
+
+	mux.Handle(
+		"/",
+		http.RedirectHandler(
+			"/static/index.html",
+			http.StatusTemporaryRedirect,
+		),
 	)
 
 	return mux
