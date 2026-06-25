@@ -1,94 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
   <meta charset="UTF-8">
-
   <title>Biblioteca</title>
-
-
   <style>
-
     body{
       font-family:Arial,sans-serif;
       margin:40px;
     }
 
-
-    .book{
-
-      border:1px solid #ccc;
-      padding:15px;
-      margin:10px;
-
-    }
-
-
     img{
-
       max-width:150px;
-
     }
-
   </style>
-
-
 </head>
-
-
 <body>
-
-
 <h1>📚 Biblioteca</h1>
-
-
 <h2>Nuevo libro</h2>
-
-
 <label>Título</label>
-
 <label for="title"></label><input id="title">
-
-
 <label>Autor</label>
-
 <label for="author"></label><input id="author">
-
-
 <label>ISBN</label>
-
 <label for="isbn"></label><input id="isbn">
-
-
 <label>Portada</label>
-
 <input
         id="image"
         type="file"
         accept="image/*"
 >
-
-
-
 <button onclick="createBook()">
   Agregar
 </button>
-
-
-
 <h2>Libros</h2>
-
-
 <div id="books"></div>
-
-
-
-
-
 <script>
-
-
   let jwtToken="";
 
 
@@ -141,50 +87,50 @@
       box.innerHTML += `
 
 
-<div class="book">
+         <div class="book">
 
 
-<h3>
-${book.title}
-</h3>
+         <h3>
+         ${book.title}
+         </h3>
 
 
-${book.image ?
+         ${book.image ?
               `
-<img src="${book.image}" alt="portada del libro">
-`
+         <img src="${book.image}" alt="portada del libro">
+         `
               :
               ""
       }
 
 
 
-<p>
-${book.author}
-</p>
+         <p>
+         ${book.author}
+         </p>
 
 
-<p>
-${book.isbn}
-</p>
-
-
-
-<button onclick="editBook(${book.id})">
-Editar
-</button>
-
-
-<button onclick="deleteBook(${book.id})">
-Borrar
-</button>
+         <p>
+         ${book.isbn}
+         </p>
 
 
 
-</div>
+         <button onclick="editBook(${book.id})">
+         Editar
+         </button>
 
 
-`;
+         <button onclick="deleteBook(${book.id})">
+         Borrar
+         </button>
+
+
+
+         </div>
+
+
+         `;
 
     });
 
@@ -346,51 +292,83 @@ Borrar
   async function editBook(id){
 
 
-    const title =
+    // Obtener libro actual
+    const response =
+            await fetch(
+                    "/api/books/"+id
+            );
+
+
+    const book =
+            await response.json();
+
+
+
+    const newTitle =
             prompt(
-                    "Nuevo titulo"
+                    "Nuevo titulo:",
+                    book.title
             );
 
 
 
-    if(!title)
+    if(!newTitle){
+
       return;
 
+    }
 
 
-    await fetch(
-            "/api/books/"+id,
-            {
 
-              method:"PUT",
-
-              headers:{
-
-                "Content-Type":
-                        "application/json",
-
-                "Authorization":
-                        "Bearer "+jwtToken
-
-              },
+    // Mantiene todos los datos
+    book.title =
+            newTitle;
 
 
-              body:
-                      JSON.stringify({
 
-                        title:title
+    const update =
+            await fetch(
+                    "/api/books/"+id,
+                    {
 
-                      })
+                      method:"PUT",
 
 
-            });
+                      headers:{
+
+                        "Content-Type":
+                                "application/json",
+
+                        "Authorization":
+                                "Bearer "+jwtToken
+
+                      },
+
+
+                      body:
+                              JSON.stringify(book)
+
+                    }
+            );
+
+
+
+
+    if(!update.ok){
+
+      alert(
+              "Error actualizando libro"
+      );
+
+      return;
+
+    }
+
 
 
     await loadBooks();
 
-
   }
-
 
 
 
@@ -411,9 +389,5 @@ Borrar
 
 
 </script>
-
-
 </body>
-
-
 </html>

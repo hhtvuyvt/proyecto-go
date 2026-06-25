@@ -19,3 +19,20 @@ uploads/
 # SO
 .DS_Store
 *~
+
+# IDEs
+.idea/
+
+# Node.js
+node_modules/
+
+# JavaScript / test / build artifacts
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+coverage/
+.nyc_output/
+*.snap
+dist/
+build/
