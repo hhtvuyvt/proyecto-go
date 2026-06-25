@@ -2,93 +2,158 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
 
 jobs:
-  ci:
+
+  # =========================
+  # 🟦 BACKEND (Go)
+  # =========================
+  backend:
+
     runs-on: ubuntu-latest
 
     steps:
-      # 📥 Clonar repo
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # =========================
-      # 🟦 BACKEND (Go)
-      # =========================
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: go.mod
+          cache: true
 
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependencies
-        run: go mod tidy
+      - name: Verify modules
+        run: go mod verify
+
+
+      - name: Run formatter check
+        run: |
+          test -z "$(gofmt -l .)"
+
 
       - name: Run linter (Go)
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
 
+
+      - name: Run vet
+        run: go vet ./...
+
+
       - name: Run tests with coverage
-        run: go test ./... -coverprofile=coverage.out
+        run: |
+          go test ./... -coverprofile=coverage.out
+
 
       - name: Show coverage
-        run: go tool cover -func=coverage.out
+        run: |
+          go tool cover -func=coverage.out
+
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage
+          name: go-coverage
           path: coverage.out
+
+
+      - name: Check coverage
+        env:
+          MIN_COVERAGE: 60
+        run: |
+          total=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3,1,length($3)-1)}')
+
+          echo "Coverage: $total%"
+
+          awk "BEGIN {exit !($total >= $MIN_COVERAGE)}"
+
 
       - name: Build backend
         run: go build ./...
 
-      # =========================
-      # 🟨 FRONTEND (HTML)
-      # =========================
+
+
+  # =========================
+  # 🟨 FRONTEND (HTML)
+  # =========================
+
+  frontend:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
+          cache: npm
+
 
       - name: Install HTMLHint
         run: npm install -g htmlhint
 
+
       - name: Lint HTML
         run: htmlhint "static/**/*.html"
 
-      # =========================
-      # 🧪 E2E (Playwright)
-      # =========================
 
-      - name: Install Node deps
-        run: npm install
+
+  # =========================
+  # 🧪 E2E (Playwright)
+  # =========================
+
+  e2e:
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - backend
+      - frontend
+
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+
+      - name: Install dependencies
+        run: npm ci
+
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright
+
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+
       - name: Run E2E tests
         run: npx playwright test
-
-      # =========================
-      # 🚨 Coverage mínimo
-      # =========================
-
-      - name: Check coverage
-        run: |
-          total=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
-          echo "Coverage: $total%"
-          min=60
-          awk "BEGIN {exit !($total >= $min)}"
