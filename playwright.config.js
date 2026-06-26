@@ -1,44 +1,42 @@
-import { defineConfig } from "@playwright/test";
+import {
+    defineConfig
+}
+    from "@playwright/test";
+
 
 
 export default defineConfig({
 
-    testDir: "./e2e",
-
-    timeout: 30000,
+    testDir:"./e2e",
 
 
-    webServer: {
+    webServer:{
 
-        command: "go run main.go",
+        command:"go run .",
 
-        url: "http://localhost:8080",
+        url:
+            "http://localhost:8080",
 
-        reuseExistingServer: false,
+        reuseExistingServer:true,
 
-        env: {
+        env:{
 
-            PORT: "8080",
-
-            JWT_SECRET: "test_secret_key",
-
-            DB_PATH: "./data/test.db"
+            JWT_SECRET:
+                "test_secret"
 
         }
 
     },
 
 
-    use: {
+    use:{
 
-        baseURL: "http://localhost:8080",
+        baseURL:
+            "http://localhost:8080",
 
-        headless: true,
-
-        screenshot: "only-on-failure",
-
-        trace: "retain-on-failure"
+        trace:"on-first-retry"
 
     }
+
 
 });
