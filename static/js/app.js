@@ -19,7 +19,7 @@ async function loadToken() {
 
     try {
 
-        const res = await fetch("/login");
+        const res = await fetch("/api/login");
 
 
         if (!res.ok) {
