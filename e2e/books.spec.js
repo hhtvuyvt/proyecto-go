@@ -1,46 +1,42 @@
 import { test, expect } from "@playwright/test";
 
 
-test.describe("CRUD libros", ()=>{
+test.describe("CRUD libros",()=>{
+
+
+    test.beforeEach(async({page})=>{
+
+        await page.goto("/");
+
+    });
+
+
 
 
     test("crear libro", async({page})=>{
 
 
-        await page.goto("/");
+        await page.fill("#titulo","Libro E2E");
 
+        await page.fill("#autor","Autor E2E");
 
-        await page.fill(
-            "#title",
-            "Libro prueba E2E"
-        );
-
+        await page.fill("#isbn","111");
 
         await page.fill(
-            "#author",
-            "Autor prueba"
+            "#imagen",
+            "https://via.placeholder.com/150"
         );
 
 
-        await page.fill(
-            "#isbn",
-            "99999"
-        );
 
-
-        await page.click(
-            "#saveButton"
-        );
+        await page.click("#saveButton");
 
 
 
         await expect(
             page.locator(".book")
         )
-            .toContainText(
-                "Libro prueba E2E"
-            );
-
+            .toContainText("Libro E2E");
 
     });
 
@@ -49,65 +45,63 @@ test.describe("CRUD libros", ()=>{
 
 
 
-    test("editar mantiene información", async({page})=>{
+    test("editar mantiene datos",async({page})=>{
 
 
-        await page.goto("/");
+        await page.fill("#titulo","Libro editar");
+
+        await page.fill("#autor","Autor original");
+
+        await page.fill("#isbn","222");
+
+        await page.fill("#imagen","https://via.placeholder.com/150");
+
+
+
+        await page.click("#saveButton");
 
 
 
         const book =
             page.locator(".book")
                 .filter({
-                    hasText:
-                        "Libro prueba E2E"
-                })
-                .first();
+                    hasText:"Libro editar"
+                });
 
 
 
         await book
-            .getByText("Editar")
+            .getByTestId("edit-button")
             .click();
 
 
 
-
         await page.fill(
-            "#title",
-            "Libro editado E2E"
+            "#titulo",
+            "Libro cambiado"
         );
 
 
 
-        await page.click(
-            "#saveButton"
-        );
-
+        await page.click("#saveButton");
 
 
 
         const updated =
             page.locator(".book")
                 .filter({
-                    hasText:
-                        "Libro editado E2E"
+                    hasText:"Libro cambiado"
                 });
 
 
 
         await expect(updated)
-            .toContainText(
-                "Autor prueba"
-            );
+            .toContainText("Autor original");
+
 
 
         await expect(updated)
-            .toContainText(
-                "99999"
-            );
-
-
+            .toContainText("222");
 
     });
 
@@ -116,40 +110,40 @@ test.describe("CRUD libros", ()=>{
 
 
 
+    test("borrar libro",async({page})=>{
 
 
-    test("borrar libro", async({page})=>{
+        await page.fill("#titulo","Libro borrar");
+
+        await page.fill("#autor","Eliminar");
+
+        await page.fill("#isbn","333");
+
+        await page.fill("#imagen","https://via.placeholder.com/150");
 
 
-        await page.goto("/");
+
+        await page.click("#saveButton");
 
 
 
         const book =
             page.locator(".book")
                 .filter({
-                    hasText:
-                        "Libro editado E2E"
-                })
-                .first();
-
+                    hasText:"Libro borrar"
+                });
 
 
 
         await book
-            .getByText("Borrar")
+            .getByTestId("delete-button")
             .click();
 
 
 
-
-        await expect(
-            page.locator(".book")
-        )
+        await expect(book)
             .not
-            .toContainText(
-                "Libro editado E2E"
-            );
+            .toBeVisible();
 
 
     });

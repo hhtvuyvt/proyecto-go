@@ -1,138 +1,202 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
   <meta charset="UTF-8">
-  <title>Biblioteca</title>
-  <style>
-    body{
-      font-family:Arial,sans-serif;
-      margin:40px;
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    img{
-      max-width:150px;
-    }
-  </style>
+  <title>Tienda de Libros</title>
+
+
+  <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
 </head>
+
+
 <body>
-<h1>📚 Biblioteca</h1>
-<h2>Nuevo libro</h2>
-<label>Título</label>
-<label for="title"></label><input id="title">
-<label>Autor</label>
-<label for="author"></label><input id="author">
-<label>ISBN</label>
-<label for="isbn"></label><input id="isbn">
-<label>Portada</label>
-<input
-        id="image"
-        type="file"
-        accept="image/*"
->
-<button onclick="createBook()">
-  Agregar
-</button>
-<h2>Libros</h2>
-<div id="books"></div>
+
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+
+  <div class="container-fluid">
+
+    <a class="navbar-brand" href="#">
+      Tienda de Libros
+    </a>
+
+  </div>
+
+</nav>
+
+
+
+<div class="container my-4">
+
+
+  <h2 class="mb-3">
+    Agregar / Editar Libro
+  </h2>
+
+
+
+  <form id="book-form" class="row g-3">
+
+
+    <div class="col-md-6">
+
+      <label for="titulo" class="form-label">
+        Título
+      </label>
+
+      <input
+              type="text"
+              class="form-control"
+              id="titulo"
+              required>
+
+    </div>
+
+
+
+    <div class="col-md-6">
+
+      <label for="autor" class="form-label">
+        Autor
+      </label>
+
+
+      <input
+              type="text"
+              class="form-control"
+              id="autor"
+              required>
+
+
+    </div>
+
+
+
+
+    <div class="col-md-4">
+
+      <label for="isbn" class="form-label">
+        ISBN
+      </label>
+
+
+      <input
+              type="text"
+              class="form-control"
+              id="isbn"
+              required>
+
+
+    </div>
+
+
+
+
+    <div class="col-md-8">
+
+      <label for="imagen" class="form-label">
+        URL de la imagen
+      </label>
+
+
+      <input
+              type="url"
+              class="form-control"
+              id="imagen"
+              placeholder="https://...">
+
+    </div>
+
+
+
+
+    <div class="col-12">
+
+
+      <button
+              id="saveButton"
+              type="submit"
+              class="btn btn-success">
+
+        Agregar
+
+      </button>
+
+
+    </div>
+
+
+
+  </form>
+
+
+
+
+  <hr class="my-4">
+
+
+
+  <h2 class="mb-3">
+    Catálogo
+  </h2>
+
+
+
+  <div
+          id="book-list"
+          class="row gy-4">
+
+  </div>
+
+
+
+</div>
+
+
+
+
+
 <script>
-  let jwtToken="";
+
+
+  const API_URL="/api/books";
+
+  let editingBookId=null;
 
 
 
-  async function loadToken(){
+  async function fetchBooks(){
 
 
-    const r =
-            await fetch("/api/login");
+    const res =
+            await fetch(API_URL);
 
 
-    const data =
-            await r.json();
-
-
-    jwtToken =
-            data.token;
-
-
-  }
-
-
-
-
-
-  async function loadBooks(){
-
-
-    const r =
-            await fetch("/api/books");
+    if(!res.ok)
+      return;
 
 
     const books =
-            await r.json();
+            await res.json();
 
 
 
-    const box =
-            document.getElementById("books");
+    const list =
+            document.getElementById("book-list");
+
+
+    list.innerHTML="";
 
 
 
-    box.innerHTML="";
-
-
-
-    books.forEach(book=>{
-
-
-      box.innerHTML += `
-
-
-         <div class="book">
-
-
-         <h3>
-         ${book.title}
-         </h3>
-
-
-         ${book.image ?
-              `
-         <img src="${book.image}" alt="portada del libro">
-         `
-              :
-              ""
-      }
-
-
-
-         <p>
-         ${book.author}
-         </p>
-
-
-         <p>
-         ${book.isbn}
-         </p>
-
-
-
-         <button onclick="editBook(${book.id})">
-         Editar
-         </button>
-
-
-         <button onclick="deleteBook(${book.id})">
-         Borrar
-         </button>
-
-
-
-         </div>
-
-
-         `;
-
-    });
+    books.forEach(addBookToDOM);
 
 
   }
@@ -141,253 +205,330 @@
 
 
 
-
-  async function createBook(){
-
-
-    let image="";
+  function addBookToDOM(book){
 
 
 
-    const file =
-            document.getElementById("image")
-                    .files[0];
+    const col =
+            document.createElement("div");
 
 
 
-    if(file){
-
-
-      const form =
-              new FormData();
+    col.className =
+            "book col-sm-6 col-md-4 col-lg-3";
 
 
 
-      form.append(
-              "image",
-              file
-      );
-
-
-
-      const upload =
-              await fetch(
-                      "/api/upload",
-                      {
-
-                        method:"POST",
-
-                        headers:{
-
-                          "Authorization":
-                                  "Bearer "+jwtToken
-
-                        },
-
-
-                        body:form
-
-
-                      });
-
-
-
-      const data =
-              await upload.json();
-
-
-
-      image =
-              data.path;
-
-
-    }
+    col.dataset.id =
+            book.id;
 
 
 
 
-    const book={
+    col.innerHTML = `
+
+<div class="card h-100 shadow-sm">
 
 
-      title:
-      document.getElementById("title").value,
-
-
-      author:
-      document.getElementById("author").value,
-
-
-      isbn:
-      document.getElementById("isbn").value,
-
-
-      image:image
-
-    };
+<img
+src="${book.image}"
+class="card-img-top"
+alt="${book.title}">
 
 
 
+<div class="card-body d-flex flex-column">
 
-    await fetch(
-            "/api/books",
-            {
 
-              method:"POST",
+<h5 class="card-title">
+${book.title}
+</h5>
 
-              headers:{
 
-                "Content-Type":
-                        "application/json"
 
-              },
+<p class="card-text">
 
-              body:
-                      JSON.stringify(book)
+<strong>
+Autor:
+</strong>
+
+${book.author}
+
+</p>
+
+
+
+<p class="card-text text-muted">
+
+<small>
+${book.isbn}
+</small>
+
+</p>
+
+
+
+<div class="mt-auto d-flex gap-2">
+
+
+<button
+
+class="btn btn-outline-primary btn-sm editar"
+
+data-testid="edit-button">
+
+Editar
+
+</button>
+
+
+
+<button
+
+class="btn btn-outline-danger btn-sm eliminar"
+
+data-testid="delete-button">
+
+Eliminar
+
+</button>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+`;
+
+
+
+    document
+            .getElementById("book-list")
+            .appendChild(col);
+
+
+
+  }
+
+
+
+
+
+  document
+          .getElementById("book-form")
+          .addEventListener("submit", async e=>{
+
+
+            e.preventDefault();
+
+
+
+            const data={
+
+
+              title:
+              document.getElementById("titulo").value,
+
+
+              author:
+              document.getElementById("autor").value,
+
+
+              isbn:
+              document.getElementById("isbn").value,
+
+
+              image:
+              document.getElementById("imagen").value
+
+            };
+
+
+
+            let url=API_URL;
+
+            let method="POST";
+
+
+
+            if(editingBookId){
+
+
+              url =
+                      `${API_URL}/${editingBookId}`;
+
+
+              method="PUT";
+
 
             }
 
-    );
-
-
-
-    await loadBooks();
-
-
-  }
 
 
 
 
+            const res =
+                    await fetch(url,{
 
-
-  async function deleteBook(id){
-
-
-    await fetch(
-            "/api/books/"+id,
-            {
-
-              method:"DELETE",
-
-              headers:{
-
-                "Authorization":
-                        "Bearer "+jwtToken
-
-              }
-
-            });
-
-
-    await loadBooks();
-
-  }
-
-
-
-
-
-
-
-  async function editBook(id){
-
-
-    // Obtener libro actual
-    const response =
-            await fetch(
-                    "/api/books/"+id
-            );
-
-
-    const book =
-            await response.json();
-
-
-
-    const newTitle =
-            prompt(
-                    "Nuevo titulo:",
-                    book.title
-            );
-
-
-
-    if(!newTitle){
-
-      return;
-
-    }
-
-
-
-    // Mantiene todos los datos
-    book.title =
-            newTitle;
-
-
-
-    const update =
-            await fetch(
-                    "/api/books/"+id,
-                    {
-
-                      method:"PUT",
-
+                      method,
 
                       headers:{
 
-                        "Content-Type":
-                                "application/json",
-
-                        "Authorization":
-                                "Bearer "+jwtToken
+                        "Content-Type":"application/json"
 
                       },
 
-
                       body:
-                              JSON.stringify(book)
+                              JSON.stringify(data)
 
-                    }
-            );
-
+                    });
 
 
 
-    if(!update.ok){
-
-      alert(
-              "Error actualizando libro"
-      );
-
-      return;
-
-    }
+            if(!res.ok)
+              return;
 
 
 
-    await loadBooks();
+            editingBookId=null;
 
-  }
 
+            e.target.reset();
+
+
+            document
+                    .getElementById("saveButton")
+                    .innerText="Agregar";
+
+
+
+            await fetchBooks();
+
+
+
+          });
+
+
+
+
+
+
+
+  document
+          .getElementById("book-list")
+          .addEventListener("click",async e=>{
+
+
+            const card =
+                    e.target.closest(".book");
+
+
+
+            if(!card)
+              return;
+
+
+
+            const id =
+                    card.dataset.id;
+
+
+
+
+            if(e.target.classList.contains("eliminar")){
+
+
+              const res =
+                      await fetch(
+                              `${API_URL}/${id}`,
+                              {
+                                method:"DELETE"
+                              }
+                      );
+
+
+
+              if(res.ok)
+
+                card.remove();
+
+
+
+            }
+
+
+
+
+
+            if(e.target.classList.contains("editar")){
+
+
+              document
+                      .getElementById("titulo")
+                      .value =
+                      card.querySelector(".card-title")
+                              .innerText;
+
+
+
+              document
+                      .getElementById("autor")
+                      .value =
+                      card.querySelector(".card-text")
+                              .innerText
+                              .replace("Autor:","")
+                              .trim();
+
+
+
+              document
+                      .getElementById("isbn")
+                      .value =
+                      card.querySelector("small")
+                              .innerText;
+
+
+
+              document
+                      .getElementById("imagen")
+                      .value =
+                      card.querySelector("img")
+                              .src;
+
+
+
+              editingBookId=id;
+
+
+
+              document
+                      .getElementById("saveButton")
+                      .innerText=
+                      "Guardar cambios";
+
+
+            }
+
+
+
+          });
 
 
 
 
   window.onload =
-          async()=>{
-
-
-            await loadToken();
-
-
-            await loadBooks();
-
-
-          };
+          fetchBooks;
 
 
 
 </script>
+
+
 </body>
+
 </html>
