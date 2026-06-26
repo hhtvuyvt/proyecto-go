@@ -5,7 +5,9 @@
 
   <meta charset="UTF-8">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1">
 
   <title>Tienda de Libros</title>
 
@@ -14,19 +16,20 @@
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
           rel="stylesheet">
 
+
 </head>
 
 
 <body>
 
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<nav class="navbar navbar-dark bg-primary">
 
   <div class="container">
 
-    <a class="navbar-brand">
-      Tienda de Libros
-    </a>
+<span class="navbar-brand">
+Tienda de Libros
+</span>
 
   </div>
 
@@ -34,12 +37,16 @@
 
 
 
+
 <div class="container my-4">
 
 
-  <h2>
+
+  <h2 class="mb-3">
     Agregar / Editar Libro
   </h2>
+
+
 
 
   <form
@@ -47,10 +54,12 @@
           class="row g-3">
 
 
+
     <div class="col-md-6">
 
+
       <label
-              for="titulo"
+              for="title"
               class="form-label">
 
         Título
@@ -59,11 +68,19 @@
 
 
       <input
-              id="titulo"
+
+              type="text"
+
+              id="title"
+
+              name="title"
+
               class="form-control"
+
               required>
 
     </div>
+
 
 
 
@@ -72,7 +89,7 @@
 
 
       <label
-              for="autor"
+              for="author"
               class="form-label">
 
         Autor
@@ -81,8 +98,15 @@
 
 
       <input
-              id="autor"
+
+              type="text"
+
+              id="author"
+
+              name="author"
+
               class="form-control"
+
               required>
 
 
@@ -105,12 +129,18 @@
 
 
       <input
+
+              type="text"
+
               id="isbn"
-              class="form-control"
-              required>
+
+              name="isbn"
+
+              class="form-control">
 
 
     </div>
+
 
 
 
@@ -130,13 +160,20 @@
 
       <input
 
+              type="text"
+
               id="image"
+
+              name="image"
 
               class="form-control"
 
-              placeholder="URL imagen">
+              placeholder="URL o imagen">
+
 
     </div>
+
+
 
 
 
@@ -149,11 +186,13 @@
 
               id="saveButton"
 
-              class="btn btn-success"
+              type="submit"
 
-              type="submit">
+              class="btn btn-success">
 
-        Agregar libro
+
+        Agregar
+
 
       </button>
 
@@ -162,11 +201,20 @@
 
 
 
+
+
   </form>
 
 
 
-  <hr>
+
+
+
+  <hr class="my-4">
+
+
+
+
 
 
   <h2>
@@ -174,493 +222,29 @@
   </h2>
 
 
+
+
   <div
+
           id="book-list"
-          class="row gy-4">
+
+          class="row g-4">
+
 
   </div>
 
 
 
+
+
 </div>
 
 
 
 
 
-<script>
+<script src="/static/js/app.js"></script>
 
-
-  const API="/api/books";
-
-
-  let token=null;
-
-  let editingBookId=null;
-
-
-
-
-  async function loadToken(){
-
-
-    const response =
-            await fetch("/api/login");
-
-
-
-    if(!response.ok)
-      throw new Error("No se pudo obtener token");
-
-
-
-    const data =
-            await response.json();
-
-
-    token=data.token;
-
-
-  }
-
-
-
-
-
-
-  async function apiFetch(url,options={}){
-
-
-    options.headers={
-
-      "Content-Type":"application/json",
-
-      ...(options.headers||{})
-
-    };
-
-
-    if(token){
-
-      options.headers.Authorization =
-              `Bearer ${token}`;
-
-    }
-
-
-
-    return fetch(url,options);
-
-  }
-
-
-
-
-
-
-
-  async function loadBooks(){
-
-
-    const response =
-            await fetch(API);
-
-
-
-    const books =
-            await response.json();
-
-
-
-    const list =
-            document.getElementById("book-list");
-
-
-
-    list.innerHTML="";
-
-
-
-    books.forEach(book=>{
-
-      renderBook(book);
-
-    });
-
-
-  }
-
-
-
-
-
-
-  function renderBook(book){
-
-
-    const col =
-            document.createElement("div");
-
-
-
-    col.className=
-            "book col-sm-6 col-md-4 col-lg-3";
-
-
-
-    col.dataset.id =
-            book.id;
-
-
-
-    col.innerHTML=`
-
-
-<div class="card h-100 shadow-sm">
-
-
-
-<img
-
-src="${book.image || 'https://via.placeholder.com/200x300'}"
-
-class="card-img-top"
-
-height="300" alt="portada del libro">
-
-
-
-<div class="card-body">
-
-
-<h5 
-class="card-title"
-data-testid="book-title">
-
-${book.title}
-
-</h5>
-
-
-
-<p>
-
-<strong>Autor:</strong>
-
-${book.author}
-
-</p>
-
-
-
-<p>
-
-${book.isbn}
-
-</p>
-
-
-
-
-<button
-
-class="btn btn-primary edit"
-
-data-testid="edit-book">
-
-Editar
-
-</button>
-
-
-
-<button
-
-class="btn btn-danger delete"
-
-data-testid="delete-book">
-
-Borrar
-
-</button>
-
-
-
-</div>
-
-
-</div>
-
-
-`;
-
-
-
-    document
-            .getElementById("book-list")
-            .appendChild(col);
-
-
-  }
-
-
-
-
-
-
-
-
-  document
-          .getElementById("book-form")
-          .addEventListener(
-                  "submit",
-                  async e=>{
-
-
-                    e.preventDefault();
-
-
-
-                    const book={
-
-
-                      title:
-                      document.getElementById("titulo").value,
-
-
-                      author:
-                      document.getElementById("autor").value,
-
-
-                      isbn:
-                      document.getElementById("isbn").value,
-
-
-                      image:
-                      document.getElementById("image").value
-
-
-                    };
-
-
-
-
-                    let url=API;
-
-                    let method="POST";
-
-
-
-                    if(editingBookId){
-
-
-                      url=`${API}/${editingBookId}`;
-
-                      method="PUT";
-
-
-                    }
-
-
-
-                    const response =
-                            await apiFetch(
-                                    url,
-                                    {
-
-                                      method,
-
-                                      body:
-                                              JSON.stringify(book)
-
-                                    }
-                            );
-
-
-
-
-                    if(!response.ok)
-                      return;
-
-
-
-
-                    editingBookId=null;
-
-
-                    e.target.reset();
-
-
-                    document
-                            .getElementById("saveButton")
-                            .innerText="Agregar libro";
-
-
-
-                    await loadBooks();
-
-
-
-                  });
-
-
-
-
-
-
-
-
-
-  document
-          .getElementById("book-list")
-          .addEventListener(
-                  "click",
-                  async e=>{
-
-
-                    const card =
-                            e.target.closest(".book");
-
-
-
-                    if(!card)
-                      return;
-
-
-
-                    const id =
-                            card.dataset.id;
-
-
-
-
-
-                    if(
-                            e.target.classList.contains("delete")
-                    ){
-
-
-                      const response =
-                              await apiFetch(
-                                      `${API}/${id}`,
-                                      {
-                                        method:"DELETE"
-                                      }
-                              );
-
-
-
-                      if(response.ok)
-                        await loadBooks();
-
-
-
-                    }
-
-
-
-
-
-
-
-                    if(
-                            e.target.classList.contains("edit")
-                    ){
-
-
-
-                      const response =
-                              await fetch(`${API}/${id}`);
-
-
-
-                      const book =
-                              await response.json();
-
-
-
-
-
-                      document
-                              .getElementById("titulo")
-                              .value=book.title;
-
-
-
-                      document
-                              .getElementById("autor")
-                              .value=book.author;
-
-
-
-                      document
-                              .getElementById("isbn")
-                              .value=book.isbn;
-
-
-
-                      document
-                              .getElementById("image")
-                              .value=
-                              book.image?.startsWith("data:image")
-                                      ?""
-                                      :book.image;
-
-
-
-
-
-                      editingBookId=id;
-
-
-
-                      document
-                              .getElementById("saveButton")
-                              .innerText="Guardar cambios";
-
-
-
-                    }
-
-
-
-                  });
-
-
-
-
-
-
-
-
-  window.onload=async()=>{
-
-
-    try{
-
-
-      await loadToken();
-
-      await loadBooks();
-
-
-    }catch(err){
-
-
-      console.error(
-              "Error iniciando:",
-              err
-      );
-
-
-    }
-
-
-  };
-
-
-
-</script>
 
 
 </body>

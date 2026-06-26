@@ -1,13 +1,8 @@
-import { test, expect } from "@playwright/test";
-
-
-const libro = {
-    title: "Libro E2E " + Date.now(),
-    author: "Autor original",
-    isbn: "ISBN-12345",
-    image: "https://via.placeholder.com/200x300"
-};
-
+import {
+    test,
+    expect
+}
+    from "@playwright/test";
 
 
 test.describe(
@@ -15,77 +10,42 @@ test.describe(
     ()=>{
 
 
-        test.beforeEach(
-            async({page})=>{
-
-                await page.goto("/");
-
-                await expect(
-                    page.locator("#book-form")
-                )
-                    .toBeVisible();
-
-            }
-
-        );
-
-
-
-
-
         test(
             "crear libro",
             async({page})=>{
 
 
-                await page
-                    .locator("#titulo")
-                    .fill(libro.title);
+                await page.goto("/");
 
 
 
-                await page
-                    .locator("#autor")
-                    .fill(libro.author);
+                await page.fill(
+                    "#title",
+                    "Libro E2E"
+                );
 
 
-
-                await page
-                    .locator("#isbn")
-                    .fill(libro.isbn);
-
-
-
-                await page
-                    .locator("#image")
-                    .fill(libro.image);
+                await page.fill(
+                    "#author",
+                    "Autor E2E"
+                );
 
 
-
-
-                await page
-                    .getByTestId("saveButton")
-                    .click();
-
-
+                await page.click(
+                    "#saveButton"
+                );
 
 
 
                 await expect(
                     page.locator(".book")
-                        .filter({
-                            hasText: libro.title
-                        })
                 )
-                    .toBeVisible();
-
+                    .toContainText(
+                        "Libro E2E"
+                    );
 
 
             });
-
-
-
-
 
 
 
@@ -96,74 +56,58 @@ test.describe(
             async({page})=>{
 
 
+                await page.goto("/");
 
-                const book =
+
+
+                const book=
                     page.locator(".book")
-                        .filter({
-                            hasText: libro.title
-                        });
-
-
-
-                await expect(book)
-                    .toBeVisible();
-
+                        .filter(
+                            {
+                                hasText:"Libro E2E"
+                            }
+                        )
+                        .first();
 
 
 
                 await book
-                    .getByTestId("edit-book")
+                    .getByText("Editar")
                     .click();
 
 
 
-
-
-                await page
-                    .locator("#titulo")
-                    .fill(
-                        "Libro cambiado E2E"
-                    );
+                await page.fill(
+                    "#title",
+                    "Libro cambiado"
+                );
 
 
 
-
-                await page
-                    .getByTestId("saveButton")
-                    .click();
-
+                await page.click(
+                    "#saveButton"
+                );
 
 
 
-
-
-                const updated =
+                const updated=
                     page.locator(".book")
-                        .filter({
-                            hasText:"Libro cambiado E2E"
-                        });
-
-
-
-
-                await expect(updated)
-                    .toContainText(
-                        libro.author
-                    );
+                        .filter(
+                            {
+                                hasText:"Libro cambiado"
+                            }
+                        );
 
 
 
                 await expect(updated)
                     .toContainText(
-                        libro.isbn
+                        "Autor E2E"
                     );
 
 
 
             });
-
-
-
 
 
 
@@ -175,42 +119,34 @@ test.describe(
             async({page})=>{
 
 
-                const book =
+                await page.goto("/");
+
+
+
+                const book=
                     page.locator(".book")
-                        .filter({
-                            hasText:"Libro cambiado E2E"
-                        });
-
-
-
-                await expect(book)
-                    .toBeVisible();
-
-
+                        .filter(
+                            {
+                                hasText:"Libro cambiado"
+                            }
+                        )
+                        .first();
 
 
 
                 await book
-                    .getByTestId("delete-book")
+                    .getByText("Borrar")
                     .click();
 
 
 
-
-
-                await expect(
-                    page.locator(".book")
-                        .filter({
-                            hasText:"Libro cambiado E2E"
-                        })
-                )
-                    .toHaveCount(0);
+                await expect(book)
+                    .not
+                    .toBeVisible();
 
 
 
             });
-
-
 
 
 

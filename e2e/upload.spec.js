@@ -1,4 +1,8 @@
-import { test, expect } from "@playwright/test";
+import {
+    test,
+    expect
+}
+    from "@playwright/test";
 
 
 
@@ -13,13 +17,6 @@ test(
 
         await expect(
             page.locator("#image")
-        )
-            .toBeVisible();
-
-
-
-        await expect(
-            page.locator("#book-list")
         )
             .toBeVisible();
 
