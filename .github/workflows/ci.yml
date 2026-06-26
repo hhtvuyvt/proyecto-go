@@ -80,7 +80,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run E2E tests
-        run: npx playwright test
+        run: npm run test:e2e
 
       # =========================
       # 🚨 Coverage mínimo
