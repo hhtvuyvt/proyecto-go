@@ -4,6 +4,7 @@
 <head>
 
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>Tienda de Libros</title>
@@ -21,9 +22,9 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
 
-  <div class="container-fluid">
+  <div class="container">
 
-    <a class="navbar-brand" href="#">
+    <a class="navbar-brand">
       Tienda de Libros
     </a>
 
@@ -36,61 +37,76 @@
 <div class="container my-4">
 
 
-  <h2 class="mb-3">
+  <h2>
     Agregar / Editar Libro
   </h2>
 
 
-
-  <form id="book-form" class="row g-3">
+  <form
+          id="book-form"
+          class="row g-3">
 
 
     <div class="col-md-6">
 
-      <label for="titulo" class="form-label">
+      <label
+              for="titulo"
+              class="form-label">
+
         Título
+
       </label>
 
+
       <input
-              type="text"
-              class="form-control"
               id="titulo"
+              class="form-control"
               required>
 
     </div>
+
 
 
 
     <div class="col-md-6">
 
-      <label for="autor" class="form-label">
+
+      <label
+              for="autor"
+              class="form-label">
+
         Autor
+
       </label>
 
 
       <input
-              type="text"
-              class="form-control"
               id="autor"
+              class="form-control"
               required>
 
 
     </div>
+
 
 
 
 
     <div class="col-md-4">
 
-      <label for="isbn" class="form-label">
+
+      <label
+              for="isbn"
+              class="form-label">
+
         ISBN
+
       </label>
 
 
       <input
-              type="text"
-              class="form-control"
               id="isbn"
+              class="form-control"
               required>
 
 
@@ -99,20 +115,29 @@
 
 
 
+
     <div class="col-md-8">
 
-      <label for="imagen" class="form-label">
-        URL de la imagen
+
+      <label
+              for="image"
+              class="form-label">
+
+        Portada
+
       </label>
 
 
       <input
-              type="url"
+
+              id="image"
+
               class="form-control"
-              id="imagen"
-              placeholder="https://...">
+
+              placeholder="URL imagen">
 
     </div>
+
 
 
 
@@ -121,11 +146,14 @@
 
 
       <button
-              id="saveButton"
-              type="submit"
-              class="btn btn-success">
 
-        Agregar
+              id="saveButton"
+
+              class="btn btn-success"
+
+              type="submit">
+
+        Agregar libro
 
       </button>
 
@@ -138,15 +166,12 @@
 
 
 
-
-  <hr class="my-4">
-
+  <hr>
 
 
-  <h2 class="mb-3">
+  <h2>
     Catálogo
   </h2>
-
 
 
   <div
@@ -166,37 +191,34 @@
 <script>
 
 
-  const API_URL="/api/books";
+  const API="/api/books";
+
+
+  let token=null;
 
   let editingBookId=null;
 
 
 
-  async function fetchBooks(){
+
+  async function loadToken(){
 
 
-    const res =
-            await fetch(API_URL);
-
-
-    if(!res.ok)
-      return;
-
-
-    const books =
-            await res.json();
+    const response =
+            await fetch("/api/login");
 
 
 
-    const list =
-            document.getElementById("book-list");
-
-
-    list.innerHTML="";
+    if(!response.ok)
+      throw new Error("No se pudo obtener token");
 
 
 
-    books.forEach(addBookToDOM);
+    const data =
+            await response.json();
+
+
+    token=data.token;
 
 
   }
@@ -205,8 +227,75 @@
 
 
 
-  function addBookToDOM(book){
 
+  async function apiFetch(url,options={}){
+
+
+    options.headers={
+
+      "Content-Type":"application/json",
+
+      ...(options.headers||{})
+
+    };
+
+
+    if(token){
+
+      options.headers.Authorization =
+              `Bearer ${token}`;
+
+    }
+
+
+
+    return fetch(url,options);
+
+  }
+
+
+
+
+
+
+
+  async function loadBooks(){
+
+
+    const response =
+            await fetch(API);
+
+
+
+    const books =
+            await response.json();
+
+
+
+    const list =
+            document.getElementById("book-list");
+
+
+
+    list.innerHTML="";
+
+
+
+    books.forEach(book=>{
+
+      renderBook(book);
+
+    });
+
+
+  }
+
+
+
+
+
+
+  function renderBook(book){
 
 
     const col =
@@ -214,7 +303,7 @@
 
 
 
-    col.className =
+    col.className=
             "book col-sm-6 col-md-4 col-lg-3";
 
 
@@ -224,33 +313,39 @@
 
 
 
+    col.innerHTML=`
 
-    col.innerHTML = `
 
 <div class="card h-100 shadow-sm">
 
 
+
 <img
-src="${book.image}"
+
+src="${book.image || 'https://via.placeholder.com/200x300'}"
+
 class="card-img-top"
-alt="${book.title}">
+
+height="300" alt="portada del libro">
 
 
 
-<div class="card-body d-flex flex-column">
+<div class="card-body">
 
 
-<h5 class="card-title">
+<h5 
+class="card-title"
+data-testid="book-title">
+
 ${book.title}
+
 </h5>
 
 
 
-<p class="card-text">
+<p>
 
-<strong>
-Autor:
-</strong>
+<strong>Autor:</strong>
 
 ${book.author}
 
@@ -258,24 +353,20 @@ ${book.author}
 
 
 
-<p class="card-text text-muted">
+<p>
 
-<small>
 ${book.isbn}
-</small>
 
 </p>
 
 
 
-<div class="mt-auto d-flex gap-2">
-
 
 <button
 
-class="btn btn-outline-primary btn-sm editar"
+class="btn btn-primary edit"
 
-data-testid="edit-button">
+data-testid="edit-book">
 
 Editar
 
@@ -285,23 +376,21 @@ Editar
 
 <button
 
-class="btn btn-outline-danger btn-sm eliminar"
+class="btn btn-danger delete"
 
-data-testid="delete-button">
+data-testid="delete-book">
 
-Eliminar
+Borrar
 
 </button>
 
 
-</div>
-
-
 
 </div>
 
 
 </div>
+
 
 `;
 
@@ -312,8 +401,10 @@ Eliminar
             .appendChild(col);
 
 
-
   }
+
+
+
 
 
 
@@ -321,97 +412,98 @@ Eliminar
 
   document
           .getElementById("book-form")
-          .addEventListener("submit", async e=>{
+          .addEventListener(
+                  "submit",
+                  async e=>{
 
 
-            e.preventDefault();
-
-
-
-            const data={
-
-
-              title:
-              document.getElementById("titulo").value,
-
-
-              author:
-              document.getElementById("autor").value,
-
-
-              isbn:
-              document.getElementById("isbn").value,
-
-
-              image:
-              document.getElementById("imagen").value
-
-            };
+                    e.preventDefault();
 
 
 
-            let url=API_URL;
-
-            let method="POST";
+                    const book={
 
 
-
-            if(editingBookId){
-
-
-              url =
-                      `${API_URL}/${editingBookId}`;
+                      title:
+                      document.getElementById("titulo").value,
 
 
-              method="PUT";
+                      author:
+                      document.getElementById("autor").value,
 
 
-            }
+                      isbn:
+                      document.getElementById("isbn").value,
+
+
+                      image:
+                      document.getElementById("image").value
+
+
+                    };
 
 
 
 
+                    let url=API;
 
-            const res =
-                    await fetch(url,{
-
-                      method,
-
-                      headers:{
-
-                        "Content-Type":"application/json"
-
-                      },
-
-                      body:
-                              JSON.stringify(data)
-
-                    });
+                    let method="POST";
 
 
 
-            if(!res.ok)
-              return;
+                    if(editingBookId){
+
+
+                      url=`${API}/${editingBookId}`;
+
+                      method="PUT";
+
+
+                    }
 
 
 
-            editingBookId=null;
+                    const response =
+                            await apiFetch(
+                                    url,
+                                    {
+
+                                      method,
+
+                                      body:
+                                              JSON.stringify(book)
+
+                                    }
+                            );
 
 
-            e.target.reset();
 
 
-            document
-                    .getElementById("saveButton")
-                    .innerText="Agregar";
-
-
-
-            await fetchBooks();
+                    if(!response.ok)
+                      return;
 
 
 
-          });
+
+                    editingBookId=null;
+
+
+                    e.target.reset();
+
+
+                    document
+                            .getElementById("saveButton")
+                            .innerText="Agregar libro";
+
+
+
+                    await loadBooks();
+
+
+
+                  });
+
+
 
 
 
@@ -421,108 +513,150 @@ Eliminar
 
   document
           .getElementById("book-list")
-          .addEventListener("click",async e=>{
+          .addEventListener(
+                  "click",
+                  async e=>{
 
 
-            const card =
-                    e.target.closest(".book");
-
-
-
-            if(!card)
-              return;
+                    const card =
+                            e.target.closest(".book");
 
 
 
-            const id =
-                    card.dataset.id;
+                    if(!card)
+                      return;
 
 
 
-
-            if(e.target.classList.contains("eliminar")){
-
-
-              const res =
-                      await fetch(
-                              `${API_URL}/${id}`,
-                              {
-                                method:"DELETE"
-                              }
-                      );
-
-
-
-              if(res.ok)
-
-                card.remove();
-
-
-
-            }
+                    const id =
+                            card.dataset.id;
 
 
 
 
 
-            if(e.target.classList.contains("editar")){
+                    if(
+                            e.target.classList.contains("delete")
+                    ){
 
 
-              document
-                      .getElementById("titulo")
-                      .value =
-                      card.querySelector(".card-title")
-                              .innerText;
-
-
-
-              document
-                      .getElementById("autor")
-                      .value =
-                      card.querySelector(".card-text")
-                              .innerText
-                              .replace("Autor:","")
-                              .trim();
+                      const response =
+                              await apiFetch(
+                                      `${API}/${id}`,
+                                      {
+                                        method:"DELETE"
+                                      }
+                              );
 
 
 
-              document
-                      .getElementById("isbn")
-                      .value =
-                      card.querySelector("small")
-                              .innerText;
+                      if(response.ok)
+                        await loadBooks();
 
 
 
-              document
-                      .getElementById("imagen")
-                      .value =
-                      card.querySelector("img")
-                              .src;
-
-
-
-              editingBookId=id;
-
-
-
-              document
-                      .getElementById("saveButton")
-                      .innerText=
-                      "Guardar cambios";
-
-
-            }
-
-
-
-          });
+                    }
 
 
 
 
-  window.onload =
-          fetchBooks;
+
+
+
+                    if(
+                            e.target.classList.contains("edit")
+                    ){
+
+
+
+                      const response =
+                              await fetch(`${API}/${id}`);
+
+
+
+                      const book =
+                              await response.json();
+
+
+
+
+
+                      document
+                              .getElementById("titulo")
+                              .value=book.title;
+
+
+
+                      document
+                              .getElementById("autor")
+                              .value=book.author;
+
+
+
+                      document
+                              .getElementById("isbn")
+                              .value=book.isbn;
+
+
+
+                      document
+                              .getElementById("image")
+                              .value=
+                              book.image?.startsWith("data:image")
+                                      ?""
+                                      :book.image;
+
+
+
+
+
+                      editingBookId=id;
+
+
+
+                      document
+                              .getElementById("saveButton")
+                              .innerText="Guardar cambios";
+
+
+
+                    }
+
+
+
+                  });
+
+
+
+
+
+
+
+
+  window.onload=async()=>{
+
+
+    try{
+
+
+      await loadToken();
+
+      await loadBooks();
+
+
+    }catch(err){
+
+
+      console.error(
+              "Error iniciando:",
+              err
+      );
+
+
+    }
+
+
+  };
 
 
 

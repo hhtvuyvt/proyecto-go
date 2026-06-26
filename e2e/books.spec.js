@@ -1,152 +1,217 @@
 import { test, expect } from "@playwright/test";
 
 
-test.describe("CRUD libros",()=>{
-
-
-    test.beforeEach(async({page})=>{
-
-        await page.goto("/");
-
-    });
-
+const libro = {
+    title: "Libro E2E " + Date.now(),
+    author: "Autor original",
+    isbn: "ISBN-12345",
+    image: "https://via.placeholder.com/200x300"
+};
 
 
 
-    test("crear libro", async({page})=>{
+test.describe(
+    "CRUD libros",
+    ()=>{
 
 
-        await page.fill("#titulo","Libro E2E");
+        test.beforeEach(
+            async({page})=>{
 
-        await page.fill("#autor","Autor E2E");
+                await page.goto("/");
 
-        await page.fill("#isbn","111");
+                await expect(
+                    page.locator("#book-form")
+                )
+                    .toBeVisible();
 
-        await page.fill(
-            "#imagen",
-            "https://via.placeholder.com/150"
+            }
+
         );
 
 
 
-        await page.click("#saveButton");
+
+
+        test(
+            "crear libro",
+            async({page})=>{
+
+
+                await page
+                    .locator("#titulo")
+                    .fill(libro.title);
 
 
 
-        await expect(
-            page.locator(".book")
-        )
-            .toContainText("Libro E2E");
+                await page
+                    .locator("#autor")
+                    .fill(libro.author);
+
+
+
+                await page
+                    .locator("#isbn")
+                    .fill(libro.isbn);
+
+
+
+                await page
+                    .locator("#image")
+                    .fill(libro.image);
+
+
+
+
+                await page
+                    .getByTestId("saveButton")
+                    .click();
+
+
+
+
+
+                await expect(
+                    page.locator(".book")
+                        .filter({
+                            hasText: libro.title
+                        })
+                )
+                    .toBeVisible();
+
+
+
+            });
+
+
+
+
+
+
+
+
+
+        test(
+            "editar mantiene datos",
+            async({page})=>{
+
+
+
+                const book =
+                    page.locator(".book")
+                        .filter({
+                            hasText: libro.title
+                        });
+
+
+
+                await expect(book)
+                    .toBeVisible();
+
+
+
+
+                await book
+                    .getByTestId("edit-book")
+                    .click();
+
+
+
+
+
+                await page
+                    .locator("#titulo")
+                    .fill(
+                        "Libro cambiado E2E"
+                    );
+
+
+
+
+                await page
+                    .getByTestId("saveButton")
+                    .click();
+
+
+
+
+
+
+                const updated =
+                    page.locator(".book")
+                        .filter({
+                            hasText:"Libro cambiado E2E"
+                        });
+
+
+
+
+                await expect(updated)
+                    .toContainText(
+                        libro.author
+                    );
+
+
+
+                await expect(updated)
+                    .toContainText(
+                        libro.isbn
+                    );
+
+
+
+            });
+
+
+
+
+
+
+
+
+
+        test(
+            "borrar libro",
+            async({page})=>{
+
+
+                const book =
+                    page.locator(".book")
+                        .filter({
+                            hasText:"Libro cambiado E2E"
+                        });
+
+
+
+                await expect(book)
+                    .toBeVisible();
+
+
+
+
+
+                await book
+                    .getByTestId("delete-book")
+                    .click();
+
+
+
+
+
+                await expect(
+                    page.locator(".book")
+                        .filter({
+                            hasText:"Libro cambiado E2E"
+                        })
+                )
+                    .toHaveCount(0);
+
+
+
+            });
+
+
+
+
 
     });
-
-
-
-
-
-
-    test("editar mantiene datos",async({page})=>{
-
-
-        await page.fill("#titulo","Libro editar");
-
-        await page.fill("#autor","Autor original");
-
-        await page.fill("#isbn","222");
-
-        await page.fill("#imagen","https://via.placeholder.com/150");
-
-
-
-        await page.click("#saveButton");
-
-
-
-        const book =
-            page.locator(".book")
-                .filter({
-                    hasText:"Libro editar"
-                });
-
-
-
-        await book
-            .getByTestId("edit-button")
-            .click();
-
-
-
-        await page.fill(
-            "#titulo",
-            "Libro cambiado"
-        );
-
-
-
-        await page.click("#saveButton");
-
-
-
-        const updated =
-            page.locator(".book")
-                .filter({
-                    hasText:"Libro cambiado"
-                });
-
-
-
-        await expect(updated)
-            .toContainText("Autor original");
-
-
-
-        await expect(updated)
-            .toContainText("222");
-
-    });
-
-
-
-
-
-
-    test("borrar libro",async({page})=>{
-
-
-        await page.fill("#titulo","Libro borrar");
-
-        await page.fill("#autor","Eliminar");
-
-        await page.fill("#isbn","333");
-
-        await page.fill("#imagen","https://via.placeholder.com/150");
-
-
-
-        await page.click("#saveButton");
-
-
-
-        const book =
-            page.locator(".book")
-                .filter({
-                    hasText:"Libro borrar"
-                });
-
-
-
-        await book
-            .getByTestId("delete-button")
-            .click();
-
-
-
-        await expect(book)
-            .not
-            .toBeVisible();
-
-
-    });
-
-
-});
