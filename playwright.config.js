@@ -10,22 +10,17 @@ export default defineConfig({
     testDir:"./e2e",
 
 
-    webServer:{
+    webServer: {
+        command: "go run .",
+        url: "http://localhost:8080",
+        timeout: 120000,
 
-        command:"go run .",
-
-        url:
-            "http://localhost:8080",
-
-        reuseExistingServer:true,
-
-        env:{
-
-            JWT_SECRET:
-                "test_secret"
-
+        env: {
+            ...process.env,
+            E2E: "true",
+            JWT_SECRET: "test-secret-key",
+            DB_PATH: "./test.db"
         }
-
     },
 
 

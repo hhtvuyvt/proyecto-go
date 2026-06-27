@@ -13,39 +13,88 @@ import (
 )
 
 func main() {
-	// Cargar variables de entorno
+
+	// Cargar .env si existe
 	if err := godotenv.Load(); err != nil {
 		log.Println("No se encontró .env, usando variables del sistema")
 	}
 
-	// Configuración
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
+	// ==========================
+	// Configuración JWT
+	// ==========================
+
 	jwtSecret := os.Getenv("JWT_SECRET")
+
 	if jwtSecret == "" {
-		log.Fatal("JWT_SECRET no configurado")
+
+		if os.Getenv("E2E") == "true" {
+
+			log.Println(
+				"Modo E2E: usando JWT_SECRET temporal",
+			)
+
+			jwtSecret = "test-secret-key"
+
+		} else {
+
+			log.Fatal(
+				"JWT_SECRET no configurado",
+			)
+
+		}
 	}
+
+	// ==========================
+	// Base de datos
+	// ==========================
 
 	dbPath := os.Getenv("DB_PATH")
+
 	if dbPath == "" {
-		log.Fatal("DB_PATH no configurado")
+
+		if os.Getenv("E2E") == "true" {
+
+			log.Println(
+				"Modo E2E: usando base de datos de prueba",
+			)
+
+			dbPath = "./test.db"
+
+		} else {
+
+			log.Fatal(
+				"DB_PATH no configurado",
+			)
+		}
 	}
 
-	// Base de datos
 	sqlDB := db.Open(dbPath)
 
-	// Repositorios
-	bookRepo := models.BookRepository{DB: sqlDB}
+	bookRepo := models.BookRepository{
+		DB: sqlDB,
+	}
 
-	// Router con dependencias inyectadas
-	router := routes.Router(routes.RouterConfig{
-		BookRepo: bookRepo,
-		JWTKey:   []byte(jwtSecret),
-	})
+	router := routes.Router(
+		routes.RouterConfig{
+			BookRepo: bookRepo,
+			JWTKey:   []byte(jwtSecret),
+		},
+	)
 
-	log.Printf("Servidor en http://localhost:%s", port)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Printf(
+		"Servidor en http://localhost:%s",
+		port,
+	)
+
+	log.Fatal(
+		http.ListenAndServe(
+			":"+port,
+			router,
+		),
+	)
 }
