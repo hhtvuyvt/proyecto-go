@@ -79,7 +79,7 @@ export default defineConfig({
 
     /*
     |--------------------------------------------------------------------------
-    | Servidor antes de ejecutar pruebas
+    | servidor antes de ejecutar pruebas
     |--------------------------------------------------------------------------
     |
     | Playwright inicia el backend Go automáticamente.

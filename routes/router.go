@@ -28,7 +28,7 @@ func Router(
 		}
 
 	// =====================
-	// PUBLICAS
+	// Publicas
 	// =====================
 
 	mux.HandleFunc(
@@ -66,7 +66,7 @@ func Router(
 	)
 
 	// =====================
-	// ARCHIVOS
+	// Archivos
 	// =====================
 
 	staticFiles :=
