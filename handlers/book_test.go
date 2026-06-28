@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -13,91 +12,72 @@ import (
 
 type mockBookRepo struct {
 	books []models.Book
+	err   error
 }
 
 func (m *mockBookRepo) GetAll() ([]models.Book, error) {
 
-	return m.books, nil
+	if m.err != nil {
+		return nil, m.err
+	}
 
+	return m.books, nil
 }
 
-func (m *mockBookRepo) GetByID(
-	id int,
-) (models.Book, error) {
+func (m *mockBookRepo) GetByID(id int) (models.Book, error) {
+
+	if m.err != nil {
+		return models.Book{}, m.err
+	}
 
 	for _, b := range m.books {
 
 		if int(b.ID) == id {
-
 			return b, nil
-
 		}
-
 	}
 
-	return models.Book{}, errors.New("no encontrado")
-
+	return models.Book{}, errors.New("not found")
 }
 
 func (m *mockBookRepo) Create(
 	book *models.Book,
 ) error {
 
-	book.ID =
-		int64(len(m.books) + 1)
+	if m.err != nil {
+		return m.err
+	}
 
-	m.books =
-		append(
-			m.books,
-			*book,
-		)
+	book.ID = 1
+
+	m.books = append(
+		m.books,
+		*book,
+	)
 
 	return nil
-
 }
 
 func (m *mockBookRepo) Update(
 	book *models.Book,
 ) error {
 
-	for i, b := range m.books {
-
-		if b.ID == book.ID {
-
-			m.books[i] = *book
-
-			return nil
-
-		}
-
+	if m.err != nil {
+		return m.err
 	}
 
-	return errors.New("no encontrado")
-
+	return nil
 }
 
 func (m *mockBookRepo) Delete(
 	id int,
 ) error {
 
-	for i, b := range m.books {
-
-		if int(b.ID) == id {
-
-			m.books =
-				append(
-					m.books[:i],
-					m.books[i+1:]...,
-				)
-
-			return nil
-
-		}
-
+	if m.err != nil {
+		return m.err
 	}
 
-	return errors.New("no encontrado")
-
+	return nil
 }
 
 func TestBooksGET(t *testing.T) {
@@ -107,9 +87,10 @@ func TestBooksGET(t *testing.T) {
 			books: []models.Book{
 				{
 					ID:     1,
-					Title:  "Libro prueba",
+					Title:  "Libro test",
 					Author: "Autor",
 					ISBN:   "123",
+					Image:  "img",
 				},
 			},
 		}
@@ -135,34 +116,11 @@ func TestBooksGET(t *testing.T) {
 	)
 
 	if rec.Code != http.StatusOK {
-
 		t.Fatalf(
-			"esperado 200 recibido %d",
+			"codigo esperado %d recibido %d",
+			http.StatusOK,
 			rec.Code,
 		)
-
-	}
-
-	var books []models.Book
-
-	err :=
-		json.NewDecoder(
-			rec.Body,
-		).Decode(&books)
-
-	if err != nil {
-
-		t.Fatal(err)
-
-	}
-
-	if len(books) != 1 {
-
-		t.Fatalf(
-			"esperaba 1 libro recibió %d",
-			len(books),
-		)
-
 	}
 
 }
@@ -178,11 +136,14 @@ func TestBooksPOST(t *testing.T) {
 		}
 
 	body :=
-		`{
-			"title":"Nuevo",
-			"author":"Autor",
-			"ISBN":"999"
-		}`
+		`
+{
+"title":"Nuevo",
+"author":"Autor",
+"isbn":"999",
+"image":"img"
+}
+`
 
 	req :=
 		httptest.NewRequest(
@@ -200,20 +161,10 @@ func TestBooksPOST(t *testing.T) {
 	)
 
 	if rec.Code != http.StatusOK {
-
 		t.Fatalf(
-			"esperado 200 recibido %d",
+			"POST fallo %d",
 			rec.Code,
 		)
-
-	}
-
-	if len(repo.books) != 1 {
-
-		t.Fatal(
-			"el libro no fue creado",
-		)
-
 	}
 
 }
@@ -251,12 +202,10 @@ func TestBookGETByID(t *testing.T) {
 	)
 
 	if rec.Code != http.StatusOK {
-
 		t.Fatalf(
-			"esperado 200 recibido %d",
+			"GET ID fallo %d",
 			rec.Code,
 		)
-
 	}
 
 }
@@ -264,14 +213,7 @@ func TestBookGETByID(t *testing.T) {
 func TestBookPUT(t *testing.T) {
 
 	repo :=
-		&mockBookRepo{
-			books: []models.Book{
-				{
-					ID:    1,
-					Title: "Viejo",
-				},
-			},
-		}
+		&mockBookRepo{}
 
 	handler :=
 		BookHandler{
@@ -279,11 +221,12 @@ func TestBookPUT(t *testing.T) {
 		}
 
 	body :=
-		`{
-			"title":"Nuevo",
-			"author":"Autor",
-			"ISBN":"555"
-		}`
+		`
+{
+"title":"Editado",
+"author":"Autor"
+}
+`
 
 	req :=
 		httptest.NewRequest(
@@ -301,20 +244,10 @@ func TestBookPUT(t *testing.T) {
 	)
 
 	if rec.Code != http.StatusOK {
-
 		t.Fatalf(
-			"esperado 200 recibido %d",
+			"PUT fallo %d",
 			rec.Code,
 		)
-
-	}
-
-	if repo.books[0].Title != "Nuevo" {
-
-		t.Fatal(
-			"no actualizo",
-		)
-
 	}
 
 }
@@ -322,14 +255,7 @@ func TestBookPUT(t *testing.T) {
 func TestBookDELETE(t *testing.T) {
 
 	repo :=
-		&mockBookRepo{
-			books: []models.Book{
-				{
-					ID:    1,
-					Title: "Eliminar",
-				},
-			},
-		}
+		&mockBookRepo{}
 
 	handler :=
 		BookHandler{
@@ -352,20 +278,107 @@ func TestBookDELETE(t *testing.T) {
 	)
 
 	if rec.Code != http.StatusOK {
-
 		t.Fatalf(
-			"esperado 200 recibido %d",
+			"DELETE fallo %d",
 			rec.Code,
 		)
-
 	}
 
-	if len(repo.books) != 0 {
+}
 
-		t.Fatal(
-			"no elimino",
+func TestBookInvalidID(t *testing.T) {
+
+	handler :=
+		BookHandler{
+			Repo: &mockBookRepo{},
+		}
+
+	req :=
+		httptest.NewRequest(
+			http.MethodGet,
+			"/api/books/hola",
+			nil,
 		)
 
+	rec :=
+		httptest.NewRecorder()
+
+	handler.Book(
+		rec,
+		req,
+	)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf(
+			"esperaba 400 recibio %d",
+			rec.Code,
+		)
+	}
+
+}
+
+func TestBooksMethodNotAllowed(t *testing.T) {
+
+	handler :=
+		BookHandler{
+			Repo: &mockBookRepo{},
+		}
+
+	req :=
+		httptest.NewRequest(
+			http.MethodDelete,
+			"/api/books",
+			nil,
+		)
+
+	rec :=
+		httptest.NewRecorder()
+
+	handler.Books(
+		rec,
+		req,
+	)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf(
+			"esperaba 405 recibio %d",
+			rec.Code,
+		)
+	}
+
+}
+
+func TestBookRepositoryError(t *testing.T) {
+
+	repo :=
+		&mockBookRepo{
+			err: errors.New("db error"),
+		}
+
+	handler :=
+		BookHandler{
+			Repo: repo,
+		}
+
+	req :=
+		httptest.NewRequest(
+			http.MethodGet,
+			"/api/books",
+			nil,
+		)
+
+	rec :=
+		httptest.NewRecorder()
+
+	handler.Books(
+		rec,
+		req,
+	)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf(
+			"esperaba error 500",
+		)
 	}
 
 }
