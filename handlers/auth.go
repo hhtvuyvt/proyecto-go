@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// AuthMiddleware valida el token JWT en las peticiones protegidas.
+// AuthMiddleware válida el token JWT en las peticiones protegidas.
 func AuthMiddleware(next http.Handler) http.Handler {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 	if len(jwtKey) == 0 {
@@ -39,7 +39,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 // LoginHandler genera un token simple (demo)
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(w http.ResponseWriter, _ *http.Request) {
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

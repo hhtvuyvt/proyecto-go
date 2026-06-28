@@ -87,7 +87,7 @@ func main() {
 	)
 
 	log.Printf(
-		"Servidor en http://localhost:%s",
+		"servidor en http://localhost:%s",
 		port,
 	)
 

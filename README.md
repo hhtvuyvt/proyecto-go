@@ -15,10 +15,10 @@ Actualmente la aplicación permite:
 - 📄 Paginación de resultados
 - 🖼️ Subir imágenes como portadas de libros
 - 🔐 Autenticación con JWT
-- 🧼 Sanitización de entradas para seguridad
+- 🧼 Desinfección de entradas para seguridad
 - 🧪 Tests unitarios para handlers y repositorios
 - 🗄️ Persistencia de datos en SQLite
-- 🌐 Servir frontend estático desde el backend en Go
+- 🌐 servir frontend estático desde el backend en Go
 
 ---
 

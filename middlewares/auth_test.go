@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// genera un token JWT válido para tests
+// Genera un token JWT válido para tests
 func generateTestToken(secret []byte) string {
 	claims := jwt.MapClaims{
 		"exp": time.Now().Add(time.Hour).Unix(),

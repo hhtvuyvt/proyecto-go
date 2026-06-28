@@ -59,7 +59,7 @@ func (m *mockBookRepo) Create(
 }
 
 func (m *mockBookRepo) Update(
-	book *models.Book,
+	_ *models.Book,
 ) error {
 
 	if m.err != nil {
@@ -70,7 +70,7 @@ func (m *mockBookRepo) Update(
 }
 
 func (m *mockBookRepo) Delete(
-	id int,
+	_ int,
 ) error {
 
 	if m.err != nil {
@@ -117,7 +117,7 @@ func TestBooksGET(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf(
-			"codigo esperado %d recibido %d",
+			"código esperado %d recibido %d",
 			http.StatusOK,
 			rec.Code,
 		)
@@ -140,7 +140,7 @@ func TestBooksPOST(t *testing.T) {
 {
 "title":"Nuevo",
 "author":"Autor",
-"isbn":"999",
+"ISBN":"999",
 "image":"img"
 }
 `
@@ -310,7 +310,7 @@ func TestBookInvalidID(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf(
-			"esperaba 400 recibio %d",
+			"esperaba 400 recibió %d",
 			rec.Code,
 		)
 	}
@@ -341,7 +341,7 @@ func TestBooksMethodNotAllowed(t *testing.T) {
 
 	if rec.Code != http.StatusMethodNotAllowed {
 		t.Fatalf(
-			"esperaba 405 recibio %d",
+			"esperaba 405 recibió %d",
 			rec.Code,
 		)
 	}

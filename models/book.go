@@ -1,11 +1,11 @@
-// Paquete models define las estructuras de datos de la aplicación.
+// Package models Paquete models define las estructuras de datos de la aplicación.
 package models
 
 // Book representa un libro dentro del sistema.
 type Book struct {
-	ID     int64  `json:"id"`     // ID autoincremental
+	ID     int64  `json:"id"`     // ID autoincrement
 	Title  string `json:"title"`  // Título del libro
 	Author string `json:"author"` // Autor del libro
-	ISBN   string `json:"isbn"`   // Código ISBN
+	ISBN   string `json:"ISBN"`   // Código ISBN
 	Image  string `json:"image"`  // URL o nombre de la portada
 }

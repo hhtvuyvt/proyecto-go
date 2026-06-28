@@ -7,32 +7,13 @@ import (
 	"strings"
 
 	"github.com/hhtvuyvt/proyecto-go/models"
+	"github.com/hhtvuyvt/proyecto-go/utils"
 )
 
-// BookHandler maneja todas las peticiones HTTP relacionadas con libros.
-//
-// Repo es la dependencia encargada de comunicarse con la base de datos.
-// Se utiliza una interfaz para poder cambiar implementaciones y facilitar
-// las pruebas unitarias mediante mocks.
 type BookHandler struct {
 	Repo models.BookRepositoryInterface
 }
 
-// Books maneja las rutas principales de libros.
-//
-// Métodos soportados:
-//
-// GET:
-//
-//	Devuelve todos los libros.
-//
-// POST:
-//
-//	Crea un nuevo libro.
-//
-// Ruta:
-//
-//	/api/books
 func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
@@ -43,28 +24,15 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 			h.Repo.GetAll()
 
 		if err != nil {
-
 			http.Error(
 				w,
 				"error obteniendo libros",
 				http.StatusInternalServerError,
 			)
-
 			return
 		}
 
-		// Evita devolver null cuando la base de datos
-		// no tiene registros.
-		//
-		// Un array vacío es más correcto para una API REST.
-		//
-		// Antes:
-		// null
-		//
-		// Ahora:
-		// []
 		if books == nil {
-
 			books =
 				make(
 					[]models.Book,
@@ -100,6 +68,15 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// =========================
+		// seguridad
+		// =========================
+		//
+		// Limpia entradas del usuario
+		// antes de llegar a la DB.
+		//
+		utils.SanitizeBook(&b)
+
 		if err :=
 			h.Repo.Create(&b); err != nil {
 
@@ -131,30 +108,9 @@ func (h BookHandler) Books(w http.ResponseWriter, r *http.Request) {
 			"método no permitido",
 			http.StatusMethodNotAllowed,
 		)
-
 	}
-
 }
 
-// Book maneja operaciones sobre un libro concreto.
-//
-// Métodos soportados:
-//
-// GET:
-//
-//	Obtener libro por ID.
-//
-// PUT:
-//
-//	Actualizar libro.
-//
-// DELETE:
-//
-//	Eliminar libro.
-//
-// Ruta:
-//
-// /api/books/{id}
 func (h BookHandler) Book(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -226,10 +182,12 @@ func (h BookHandler) Book(
 			return
 		}
 
-		// El ID viene de la URL,
-		// no del JSON enviado por el cliente.
 		b.ID =
 			int64(id)
+
+		// Igual que en POST:
+		// nunca confiar en datos de edición.
+		utils.SanitizeBook(&b)
 
 		if err :=
 			h.Repo.Update(&b); err != nil {

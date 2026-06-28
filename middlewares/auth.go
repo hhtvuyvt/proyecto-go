@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// AuthMiddleware intercepta peticiones HTTP y valida el token JWT.
+// AuthMiddleware intercepta peticiones HTTP y válida el token JWT.
 // El secreto se inyecta desde fuera para facilitar testing
 // y evitar dependencias rígidas con variables de entorno.
 func AuthMiddleware(jwtKey []byte, next http.Handler) http.Handler {
