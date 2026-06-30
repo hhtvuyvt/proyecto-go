@@ -1,35 +1,93 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// AuthMiddleware intercepta peticiones HTTP y válida el token JWT.
-// El secreto se inyecta desde fuera para facilitar testing
-// y evitar dependencias rígidas con variables de entorno.
-func AuthMiddleware(jwtKey []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// AuthMiddleware válida tokens JWT.
+//
+// La clave se recibe desde fuera para:
+// - evitar dependencia de variables globales
+// - facilitar tests
+// - separar configuración de lógica
+func AuthMiddleware(
+	jwtKey []byte,
+	next http.Handler,
+) http.Handler {
 
-		auth := r.Header.Get("Authorization")
-		if !strings.HasPrefix(auth, "Bearer ") {
-			http.Error(w, "token requerido", http.StatusUnauthorized)
-			return
-		}
+	return http.HandlerFunc(
+		func(
+			w http.ResponseWriter,
+			r *http.Request,
+		) {
 
-		tokenStr := strings.TrimPrefix(auth, "Bearer ")
+			auth :=
+				r.Header.Get(
+					"Authorization",
+				)
 
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
+			if !strings.HasPrefix(
+				auth,
+				"Bearer ",
+			) {
 
-		if err != nil || !token.Valid {
-			http.Error(w, "token inválido", http.StatusUnauthorized)
-			return
-		}
+				http.Error(
+					w,
+					"token requerido",
+					http.StatusUnauthorized,
+				)
 
-		next.ServeHTTP(w, r)
-	})
+				return
+			}
+
+			tokenStr :=
+				strings.TrimPrefix(
+					auth,
+					"Bearer ",
+				)
+
+			token, err :=
+				jwt.Parse(
+					tokenStr,
+					func(
+						token *jwt.Token,
+					) (interface{}, error) {
+
+						// Evita aceptar algoritmos
+						// diferentes al esperado.
+						if _, ok :=
+							token.Method.(*jwt.SigningMethodHMAC); !ok {
+
+							return nil,
+								fmt.Errorf(
+									"algoritmo inválido",
+								)
+						}
+
+						return jwtKey, nil
+					},
+				)
+
+			if err != nil ||
+				!token.Valid {
+
+				http.Error(
+					w,
+					"token inválido",
+					http.StatusUnauthorized,
+				)
+
+				return
+			}
+
+			next.ServeHTTP(
+				w,
+				r,
+			)
+		},
+	)
 }

@@ -14,6 +14,62 @@ type BookRepositoryInterface interface {
 	Delete(id int) error
 }
 
+// GetAll devuelve todos los libros.
+func (r BookRepository) GetAll() ([]Book, error) {
+
+	rows, err :=
+		r.DB.Query(
+			"SELECT id, title, author, isbn, image FROM books",
+		)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+
+		if err := rows.Close(); err != nil {
+			return
+		}
+
+	}()
+
+	var books []Book
+
+	for rows.Next() {
+
+		var b Book
+
+		if err :=
+			rows.Scan(
+				&b.ID,
+				&b.Title,
+				&b.Author,
+				&b.ISBN,
+				&b.Image,
+			); err != nil {
+
+			return nil, err
+		}
+
+		books =
+			append(
+				books,
+				b,
+			)
+	}
+
+	// Importante:
+	// detecta errores ocurridos durante la iteración.
+	if err :=
+		rows.Err(); err != nil {
+
+		return nil, err
+	}
+
+	return books, nil
+}
+
 // BookRepository implementa BookRepositoryInterface usando SQL.
 type BookRepository struct {
 	DB *sql.DB
@@ -22,27 +78,6 @@ type BookRepository struct {
 // 🔥 COMPROBACIÓN EN TIEMPO DE COMPILACIÓN
 // Si algo no coincide → error inmediato
 var _ BookRepositoryInterface = (*BookRepository)(nil)
-
-// GetAll devuelve todos los libros.
-func (r BookRepository) GetAll() ([]Book, error) {
-	rows, err := r.DB.Query("SELECT id, title, author, isbn, image FROM books")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var books []Book
-
-	for rows.Next() {
-		var b Book
-		if err := rows.Scan(&b.ID, &b.Title, &b.Author, &b.ISBN, &b.Image); err != nil {
-			return nil, err
-		}
-		books = append(books, b)
-	}
-
-	return books, nil
-}
 
 // GetByID obtiene un libro por ID.
 func (r BookRepository) GetByID(id int) (Book, error) {

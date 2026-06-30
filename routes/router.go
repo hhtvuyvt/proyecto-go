@@ -108,5 +108,9 @@ func Router(
 		),
 	)
 
-	return mux
+	return middlewares.RecoverMiddleware(
+		middlewares.LoggerMiddleware(
+			mux,
+		),
+	)
 }
