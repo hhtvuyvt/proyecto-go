@@ -55,6 +55,20 @@ CREATE TABLE IF NOT EXISTS users(
 
 	}
 
+	const usersIndex = `
+CREATE INDEX IF NOT EXISTS idx_users_username
+ON users(username);
+`
+
+	if _, err :=
+		db.Exec(
+			usersIndex,
+		); err != nil {
+
+		return err
+
+	}
+
 	return nil
 
 }

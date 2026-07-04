@@ -6,16 +6,17 @@ import (
 	"os"
 
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
 // EnsureAdminUser garantiza
-// la existencia del administrador
-// inicial.
+// la existencia del usuario administrador.
 //
 // Si ya existe,
 // no realiza ninguna acción.
 func EnsureAdminUser(
-	db *sql.DB,
+	database *sql.DB,
 ) error {
 
 	username :=
@@ -44,27 +45,19 @@ func EnsureAdminUser(
 
 	}
 
-	var count int
+	repo :=
+		models.UserRepository{
+			DB: database,
+		}
 
-	err :=
-		db.QueryRow(
-			`
-SELECT COUNT(*)
-FROM users
-WHERE username = ?
-`,
+	// Si ya existe,
+	// no hay nada que hacer.
+	_, err :=
+		repo.GetByUsername(
 			username,
-		).Scan(
-			&count,
 		)
 
-	if err != nil {
-
-		return err
-
-	}
-
-	if count > 0 {
+	if err == nil {
 
 		return nil
 
@@ -86,30 +79,15 @@ WHERE username = ?
 
 	}
 
-	_, err =
-		db.Exec(
-			`
-INSERT INTO users(
+	admin :=
+		models.User{
 
-	username,
+			Username: username,
 
-	password_hash
+			PasswordHash: string(hash),
+		}
 
-)
-
-VALUES(
-
-	?,
-
-	?
-
-)
-`,
-			username,
-
-			string(hash),
-		)
-
-	return err
-
+	return repo.Create(
+		&admin,
+	)
 }

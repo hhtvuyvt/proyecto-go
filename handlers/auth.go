@@ -151,3 +151,53 @@ func (h AuthHandler) LoginHandler(
 		http.StatusOK,
 	)
 }
+
+// LogoutHandler elimina la sesión
+// del usuario borrando la cookie.
+func (h AuthHandler) LogoutHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	http.SetCookie(
+
+		w,
+
+		&http.Cookie{
+
+			Name: "token",
+
+			Value: "",
+
+			Path: "/",
+
+			HttpOnly: true,
+
+			SameSite: http.SameSiteLaxMode,
+
+			Secure: false,
+
+			MaxAge: -1,
+		},
+	)
+
+	if err :=
+		json.NewEncoder(w).Encode(
+
+			map[string]bool{
+
+				"success": true,
+			},
+		); err != nil {
+
+		http.Error(
+
+			w,
+
+			"error generando respuesta",
+
+			http.StatusInternalServerError,
+		)
+
+	}
+}

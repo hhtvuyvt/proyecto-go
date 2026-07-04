@@ -55,7 +55,7 @@ func Router(
 
 	mux.HandleFunc(
 		"/api/logout",
-		handlers.LogoutHandler,
+		authHandler.LogoutHandler,
 	)
 
 	// =====================

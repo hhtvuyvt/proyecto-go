@@ -129,3 +129,41 @@ VALUES(
 
 	return nil
 }
+
+func (r UserRepository) GetByID(
+	id int64,
+) (User, error) {
+
+	var user User
+
+	err :=
+		r.DB.QueryRow(
+			`
+SELECT
+
+	id,
+
+	username,
+
+	password_hash,
+
+	created_at
+
+FROM users
+
+WHERE id = ?
+`,
+			id,
+		).Scan(
+
+			&user.ID,
+
+			&user.Username,
+
+			&user.PasswordHash,
+
+			&user.CreatedAt,
+		)
+
+	return user, err
+}
