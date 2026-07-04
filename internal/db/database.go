@@ -6,8 +6,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Open abre la base de datos SQLite,
-// crea el esquema necesario
+// Open abre la base de datos,
+// crea el esquema
 // y garantiza la existencia
 // del usuario administrador.
 func Open(
@@ -26,10 +26,22 @@ func Open(
 
 	}
 
+	// Comprueba que la conexión realmente funciona.
+	if err :=
+		database.Ping(); err != nil {
+
+		database.Close()
+
+		return nil, err
+
+	}
+
 	if err :=
 		CreateSchema(
 			database,
 		); err != nil {
+
+		database.Close()
 
 		return nil, err
 
@@ -40,10 +52,11 @@ func Open(
 			database,
 		); err != nil {
 
+		database.Close()
+
 		return nil, err
 
 	}
 
 	return database, nil
-
 }
