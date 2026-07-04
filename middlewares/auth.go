@@ -3,7 +3,6 @@ package middlewares
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -25,15 +24,12 @@ func AuthMiddleware(
 			r *http.Request,
 		) {
 
-			auth :=
-				r.Header.Get(
-					"Authorization",
+			cookie, err :=
+				r.Cookie(
+					"token",
 				)
 
-			if !strings.HasPrefix(
-				auth,
-				"Bearer ",
-			) {
+			if err != nil {
 
 				http.Error(
 					w,
@@ -45,10 +41,7 @@ func AuthMiddleware(
 			}
 
 			tokenStr :=
-				strings.TrimPrefix(
-					auth,
-					"Bearer ",
-				)
+				cookie.Value
 
 			token, err :=
 				jwt.Parse(

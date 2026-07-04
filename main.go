@@ -14,21 +14,42 @@ import (
 
 func main() {
 
-	// Cargar .env si existe
-	if err := godotenv.Load(); err != nil {
-		log.Println("No se encontró .env, usando variables del sistema")
+	// ==========================
+	// Variables de entorno
+	// ==========================
+
+	if err :=
+		godotenv.Load(); err != nil {
+
+		log.Println(
+			"No se encontró .env, usando variables del sistema",
+		)
+
 	}
 
-	port := os.Getenv("PORT")
+	// ==========================
+	// Puerto
+	// ==========================
+
+	port :=
+		os.Getenv(
+			"PORT",
+		)
+
 	if port == "" {
+
 		port = "8080"
+
 	}
 
 	// ==========================
-	// Configuración JWT
+	// JWT
 	// ==========================
 
-	jwtSecret := os.Getenv("JWT_SECRET")
+	jwtSecret :=
+		os.Getenv(
+			"JWT_SECRET",
+		)
 
 	if jwtSecret == "" {
 
@@ -38,7 +59,8 @@ func main() {
 				"Modo E2E: usando JWT_SECRET temporal",
 			)
 
-			jwtSecret = "test-secret-key"
+			jwtSecret =
+				"test-secret-key"
 
 		} else {
 
@@ -47,47 +69,98 @@ func main() {
 			)
 
 		}
+
 	}
 
 	// ==========================
 	// Base de datos
 	// ==========================
 
-	dbPath := os.Getenv("DB_PATH")
+	dbPath :=
+		os.Getenv(
+			"DB_PATH",
+		)
 
 	if dbPath == "" {
 
 		if os.Getenv("E2E") == "true" {
 
 			log.Println(
-				"Modo E2E: usando base de datos de prueba",
+				"Modo E2E: usando base de datos temporal",
 			)
 
-			dbPath = "./test.db"
+			dbPath =
+				"./test.db"
 
 		} else {
 
 			log.Fatal(
 				"DB_PATH no configurado",
 			)
+
 		}
+
 	}
 
-	sqlDB := db.Open(dbPath)
+	sqlDB, err :=
+		db.Open(
+			dbPath,
+		)
 
-	bookRepo := models.BookRepository{
-		DB: sqlDB,
+	if err != nil {
+
+		log.Fatal(err)
+
 	}
 
-	router := routes.Router(
-		routes.RouterConfig{
-			BookRepo: bookRepo,
-			JWTKey:   []byte(jwtSecret),
-		},
-	)
+	defer func() {
+
+		if err :=
+			sqlDB.Close(); err != nil {
+
+			log.Println(
+				"Error cerrando base de datos:",
+				err,
+			)
+
+		}
+
+	}()
+
+	// ==========================
+	// Repositorios
+	// ==========================
+
+	bookRepo :=
+		models.BookRepository{
+			DB: sqlDB,
+		}
+
+	userRepo :=
+		models.UserRepository{
+			DB: sqlDB,
+		}
+
+	// ==========================
+	// Router
+	// ==========================
+
+	router :=
+		routes.Router(
+			routes.RouterConfig{
+
+				BookRepo: bookRepo,
+
+				UserRepo: userRepo,
+
+				JWTKey: []byte(
+					jwtSecret,
+				),
+			},
+		)
 
 	log.Printf(
-		"servidor en http://localhost:%s",
+		"Servidor iniciado en http://localhost:%s",
 		port,
 	)
 

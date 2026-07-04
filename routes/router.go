@@ -8,27 +8,39 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-// RouterConfig agrupa dependencias del router.
+// RouterConfig agrupa las dependencias
+// necesarias para construir el router.
 type RouterConfig struct {
-	BookRepo models.BookRepository
+	BookRepo models.BookRepositoryInterface
+
+	UserRepo models.UserRepositoryInterface
 
 	JWTKey []byte
 }
 
-// Router configura rutas HTTP.
+// Router configura todas las rutas HTTP.
 func Router(
 	cfg RouterConfig,
 ) http.Handler {
 
-	mux := http.NewServeMux()
+	mux :=
+		http.NewServeMux()
 
 	bookHandler :=
 		handlers.BookHandler{
 			Repo: cfg.BookRepo,
 		}
 
+	authHandler :=
+		handlers.AuthHandler{
+
+			UserRepo: cfg.UserRepo,
+
+			JWTKey: cfg.JWTKey,
+		}
+
 	// =====================
-	// Publicas
+	// Públicas
 	// =====================
 
 	mux.HandleFunc(
@@ -38,11 +50,16 @@ func Router(
 
 	mux.HandleFunc(
 		"/api/login",
-		handlers.LoginHandler,
+		authHandler.LoginHandler,
+	)
+
+	mux.HandleFunc(
+		"/api/logout",
+		handlers.LogoutHandler,
 	)
 
 	// =====================
-	// PROTEGIDAS
+	// Protegidas
 	// =====================
 
 	mux.Handle(
@@ -66,7 +83,7 @@ func Router(
 	)
 
 	// =====================
-	// Archivos
+	// Archivos estáticos
 	// =====================
 
 	staticFiles :=
@@ -82,11 +99,10 @@ func Router(
 		),
 	)
 
+	// =====================
 	// Imágenes subidas
-	//
-	// Permite acceder a:
-	//
-	// /uploads/imagen.jpg
+	// =====================
+
 	uploads :=
 		http.FileServer(
 			http.Dir("./uploads"),
@@ -99,6 +115,10 @@ func Router(
 			uploads,
 		),
 	)
+
+	// =====================
+	// Redirección raíz
+	// =====================
 
 	mux.Handle(
 		"/",

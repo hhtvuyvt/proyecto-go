@@ -3,34 +3,115 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-// LoginHandler genera un token JWT.
-//
-// Este handler solamente crea el token.
-// La validación del token pertenece al paquete middlewares.
-func LoginHandler(
+// AuthHandler maneja la autenticación.
+type AuthHandler struct {
+	UserRepo models.UserRepositoryInterface
+	JWTKey   []byte
+}
+
+// LoginRequest representa el cuerpo JSON recibido
+// desde el formulario de login.
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// LoginHandler autentica al usuario
+// y crea una cookie HttpOnly con el JWT.
+func (h AuthHandler) LoginHandler(
 	w http.ResponseWriter,
-	_ *http.Request,
+	r *http.Request,
 ) {
 
-	jwtKey := []byte(
-		os.Getenv("JWT_SECRET"),
-	)
+	if r.Method != http.MethodPost {
+
+		http.Error(
+			w,
+			"método no permitido",
+			http.StatusMethodNotAllowed,
+		)
+
+		return
+	}
+
+	var req LoginRequest
+
+	if err :=
+		json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		http.Error(
+			w,
+			"datos inválidos",
+			http.StatusBadRequest,
+		)
+
+		return
+	}
+
+	user, err :=
+		h.UserRepo.GetByUsername(
+			req.Username,
+		)
+
+	if err != nil {
+
+		http.Error(
+			w,
+			"usuario o contraseña incorrectos",
+			http.StatusUnauthorized,
+		)
+
+		return
+	}
+
+	if err :=
+		bcrypt.CompareHashAndPassword(
+
+			[]byte(
+				user.PasswordHash,
+			),
+
+			[]byte(
+				req.Password,
+			),
+		); err != nil {
+
+		http.Error(
+			w,
+			"usuario o contraseña incorrectos",
+			http.StatusUnauthorized,
+		)
+
+		return
+	}
 
 	token :=
 		jwt.NewWithClaims(
 			jwt.SigningMethodHS256,
 			jwt.MapClaims{
-				"user": "admin",
+
+				"sub": user.ID,
+
+				"username": user.Username,
+
+				"exp": time.Now().
+					Add(24 * time.Hour).
+					Unix(),
 			},
 		)
 
 	tokenStr, err :=
-		token.SignedString(jwtKey)
+		token.SignedString(
+			h.JWTKey,
+		)
 
 	if err != nil {
 
@@ -43,19 +124,30 @@ func LoginHandler(
 		return
 	}
 
-	if err :=
-		json.NewEncoder(w).Encode(
-			map[string]string{
-				"token": tokenStr,
-			},
-		); err != nil {
+	http.SetCookie(
+		w,
+		&http.Cookie{
 
-		http.Error(
-			w,
-			"error generando respuesta",
-			http.StatusInternalServerError,
-		)
+			Name: "token",
 
-		return
-	}
+			Value: tokenStr,
+
+			Path: "/",
+
+			HttpOnly: true,
+
+			SameSite: http.SameSiteLaxMode,
+
+			// Cambiar a true
+			// cuando la aplicación
+			// use HTTPS.
+			Secure: false,
+
+			MaxAge: 60 * 60 * 24,
+		},
+	)
+
+	w.WriteHeader(
+		http.StatusOK,
+	)
 }
