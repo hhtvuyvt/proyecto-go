@@ -1,56 +1,32 @@
 //
 // books.js
 //
-// Gestiona todas las operaciones relacionadas con
-// el catálogo de libros.
-//
-// Responsabilidades:
-//
-// - Obtener los libros desde la API.
-// - Renderizar el catálogo.
-// - Crear nuevos libros.
-// - Editar libros existentes.
-// - Eliminar libros.
-//
-// La autenticación NO pertenece a este archivo.
-// Toda la gestión de sesión se encuentra en auth.js.
+// CRUD del catálogo de libros.
 //
 
 "use strict";
 
-// =============================
-// Estado de la aplicación
-// =============================
+// ===================================
+// Estado
+// ===================================
 
-// Endpoint base del recurso libros.
 const API =
     "/api/books";
 
-// Copia local del catálogo.
-//
-// Se mantiene sincronizada con el backend
-// después de cada operación CRUD.
 let books = [];
 
-// Identificador del libro que actualmente
-// está siendo editado.
-//
-// Cuando es null el formulario trabaja
-// en modo "crear".
 let editingBookId =
     null;
 
-// =============================
-// Referencias al DOM
-// =============================
+// ===================================
+// Referencias del DOM
+// ===================================
 
-// Formulario principal.
 const form =
     document.getElementById(
         "book-form",
     );
 
-// Campos del formulario.
 const titleInput =
     document.getElementById(
         "title",
@@ -71,89 +47,112 @@ const imageInput =
         "image",
     );
 
-// Botón que cambia entre
-// "Agregar"
-// y
-// "Guardar cambios".
 const saveButton =
     document.getElementById(
         "saveButton",
     );
 
-// Contenedor donde se renderiza
-// el catálogo.
 const bookList =
     document.getElementById(
         "book-list",
     );
 
-// =============================
-// API
-// =============================
+// ===================================
+// Utilidades
+// ===================================
 
-// Obtiene el catálogo completo.
-//
-// Utiliza la cookie HttpOnly creada
-// durante el inicio de sesión.
-// No es necesario enviar tokens
-// manualmente.
-async function loadBooks() {
+function resetForm() {
 
-    const response =
-        await fetch(
-            API,
-            {
+    editingBookId = null;
 
-                credentials:
-                    "same-origin",
+    form.reset();
 
-            },
-        );
-
-    if (!response.ok) {
-
-        console.error(
-            "No fue posible cargar el catálogo.",
-        );
-
-        books = [];
-
-        renderBooks();
-
-        return;
-
-    }
-
-    const data =
-        await response.json();
-
-    books =
-        Array.isArray(data)
-            ? data
-            : [];
-
-    renderBooks();
+    saveButton.innerText =
+        "Agregar";
 
 }
 
-// =============================
-// Render
-// =============================
+function sessionExpired() {
 
-// Construye visualmente el catálogo.
-//
-// Cada libro se representa mediante
-// una tarjeta Bootstrap que contiene:
-//
-// • Imagen.
-// • Título.
-// • Autor.
-// • ISBN.
-// • Botón Editar.
-// • Botón Borrar.
+    alert(
+        "La sesión ha expirado.",
+    );
+
+    if (
+        typeof showLogin ===
+        "function"
+    ) {
+
+        showLogin();
+
+    }
+
+}
+
+// ===================================
+// API
+// ===================================
+
+async function loadBooks() {
+
+    try {
+
+        const response =
+            await fetch(
+                API,
+                {
+
+                    credentials:
+                        "same-origin",
+
+                },
+            );
+
+        if (
+            response.status === 401
+        ) {
+
+            sessionExpired();
+
+            return;
+
+        }
+
+        if (
+            !response.ok
+        ) {
+
+            console.error(
+                "No fue posible cargar el catálogo.",
+            );
+
+            return;
+
+        }
+
+        books =
+            await response.json();
+
+        renderBooks();
+
+    } catch (error) {
+
+        console.error(
+            error,
+        );
+
+    }
+
+}
+
+// ===================================
+// Render
+// ===================================
+
 function renderBooks() {
 
-    bookList.innerHTML = "";
+    bookList.innerHTML =
+        "";
 
     books.forEach(
 
@@ -170,9 +169,7 @@ function renderBooks() {
                 "book col-sm-6 col-md-4 col-lg-3";
 
             card.dataset.id =
-                String(
-                    book.id,
-                );
+                book.id;
 
             card.innerHTML = `
 
@@ -181,20 +178,26 @@ function renderBooks() {
 <img
 class="card-img-top"
 src="${book.image || ""}"
-alt="Portada de ${book.title}">
+alt="${book.title}">
 
 <div class="card-body">
 
 <h5 class="card-title">
+
 ${book.title}
+
 </h5>
 
 <p class="card-text">
+
 ${book.author}
+
 </p>
 
 <p class="card-text">
+
 ${book.isbn}
+
 </p>
 
 <button
