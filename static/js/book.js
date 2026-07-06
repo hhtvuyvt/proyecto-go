@@ -118,18 +118,6 @@ async function loadBooks() {
 
         }
 
-        if (
-            !response.ok
-        ) {
-
-            console.error(
-                "No fue posible cargar el catálogo.",
-            );
-
-            return;
-
-        }
-
         books =
             await response.json();
 
@@ -231,3 +219,133 @@ Borrar
     );
 
 }
+
+// ===================================
+// Formulario
+// ===================================
+
+form.addEventListener(
+
+    "submit",
+
+    async function (
+        event,
+    ) {
+
+        event.preventDefault();
+
+        const data = {
+
+            title:
+                titleInput.value.trim(),
+
+            author:
+                authorInput.value.trim(),
+
+            isbn:
+                isbnInput.value.trim(),
+
+            image:
+                imageInput.value.trim(),
+
+        };
+
+        let response;
+
+        if (
+            editingBookId ===
+            null
+        ) {
+
+            response =
+                await fetch(
+
+                    API,
+
+                    {
+
+                        method:
+                            "POST",
+
+                        credentials:
+                            "same-origin",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                        },
+
+                        body:
+                            JSON.stringify(
+                                data,
+                            ),
+
+                    },
+
+                );
+
+        } else {
+
+            response =
+                await fetch(
+
+                    `${API}/${editingBookId}`,
+
+                    {
+
+                        method:
+                            "PUT",
+
+                        credentials:
+                            "same-origin",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                        },
+
+                        body:
+                            JSON.stringify(
+                                data,
+                            ),
+
+                    },
+
+                );
+
+        }
+
+        if (
+            response.status ===
+            401
+        ) {
+
+            sessionExpired();
+
+            return;
+
+        }
+
+        if (
+            !response.ok
+        ) {
+
+            console.error(
+                "No fue posible guardar el libro.",
+            );
+
+            return;
+
+        }
+
+        resetForm();
+
+        await loadBooks();
+
+    },
+
+);
