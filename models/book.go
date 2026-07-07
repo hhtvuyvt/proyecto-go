@@ -6,6 +6,6 @@ type Book struct {
 	ID     int64  `json:"id"`     // ID autoincrement
 	Title  string `json:"title"`  // Título del libro
 	Author string `json:"author"` // Autor del libro
-	ISBN   string `json:"ISBN"`   // Código ISBN
+	ISBN   string `json:"isbn"`   // Código ISBN
 	Image  string `json:"image"`  // URL o nombre de la portada
 }
