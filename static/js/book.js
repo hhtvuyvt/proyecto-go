@@ -221,6 +221,99 @@ Borrar
 }
 
 // ===================================
+// Eventos del catálogo
+// ===================================
+
+// Gestiona los botones Editar y Borrar
+// mediante delegación de eventos.
+bookList.addEventListener(
+
+    "click",
+
+    async function (
+        event,
+    ) {
+
+        const button =
+            event.target.closest(
+                "button",
+            );
+
+        if (!button) {
+
+            return;
+
+        }
+
+        const card =
+            button.closest(
+                ".book",
+            );
+
+        if (!card) {
+
+            return;
+
+        }
+
+        const id =
+            Number(
+                card.dataset.id,
+            );
+
+        // ===========================
+        // Editar
+        // ===========================
+
+        if (
+            button.dataset.action ===
+            "edit"
+        ) {
+
+            const book =
+                books.find(
+
+                    function (b) {
+
+                        return b.id === id;
+
+                    },
+
+                );
+
+            if (!book) {
+
+                return;
+
+            }
+
+            editingBookId =
+                id;
+
+            titleInput.value =
+                book.title;
+
+            authorInput.value =
+                book.author;
+
+            isbnInput.value =
+                book.isbn || "";
+
+            imageInput.value =
+                book.image || "";
+
+            saveButton.innerText =
+                "Guardar cambios";
+
+            titleInput.focus();
+
+        }
+
+    },
+
+);
+
+// ===================================
 // Formulario
 // ===================================
 
