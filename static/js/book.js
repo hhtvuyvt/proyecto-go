@@ -309,6 +309,69 @@ bookList.addEventListener(
 
         }
 
+        // ===========================
+        // Borrar
+        // ===========================
+
+        if (
+            button.dataset.action ===
+            "delete"
+        ) {
+
+            const confirmed =
+                confirm(
+                    "¿Eliminar este libro?",
+                );
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+            const response =
+                await fetch(
+
+                    `${API}/${id}`,
+
+                    {
+
+                        method:
+                            "DELETE",
+
+                        credentials:
+                            "same-origin",
+
+                    },
+
+                );
+
+            if (
+                response.status === 401
+            ) {
+
+                sessionExpired();
+
+                return;
+
+            }
+
+            if (
+                !response.ok
+            ) {
+
+                console.error(
+                    "No fue posible eliminar el libro.",
+                );
+
+                return;
+
+            }
+
+            await loadBooks();
+
+        }
+
     },
 
 );
