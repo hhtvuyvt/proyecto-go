@@ -261,6 +261,11 @@ bookList.addEventListener(
                 card.dataset.id,
             );
 
+        console.log(
+            "Acción:",
+            button.dataset.action,
+        );
+
         // ===========================
         // Editar
         // ===========================
@@ -308,6 +313,11 @@ bookList.addEventListener(
             titleInput.focus();
 
         }
+
+        console.log(
+            "ID:",
+            id,
+        );
 
         // ===========================
         // Borrar
