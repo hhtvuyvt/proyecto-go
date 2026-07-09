@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// AuthMiddleware válida tokens JWT.
+// AuthMiddleware válida tokens JWT que viajan en cookies.
 //
 // La clave se recibe desde fuera para:
 // - evitar dependencia de variables globales

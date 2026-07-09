@@ -35,7 +35,7 @@ func generateTestToken(secret []byte) string {
 	return tokenStr
 }
 
-func TestAuthMiddlewareWithoutToken(t *testing.T) {
+func TestAuthMiddlewareWithoutCookie(t *testing.T) {
 
 	secret := []byte("test-secret")
 
@@ -79,7 +79,7 @@ func TestAuthMiddlewareWithoutToken(t *testing.T) {
 	}
 }
 
-func TestAuthMiddlewareWithInvalidToken(t *testing.T) {
+func TestAuthMiddlewareWithInvalidCookie(t *testing.T) {
 
 	secret := []byte("test-secret")
 
@@ -106,9 +106,14 @@ func TestAuthMiddlewareWithInvalidToken(t *testing.T) {
 			nil,
 		)
 
-	req.Header.Set(
-		"Authorization",
-		"Bearer token-invalido",
+	req.AddCookie(
+
+		&http.Cookie{
+
+			Name: "token",
+
+			Value: "token-invalido",
+		},
 	)
 
 	rec :=
@@ -128,7 +133,7 @@ func TestAuthMiddlewareWithInvalidToken(t *testing.T) {
 	}
 }
 
-func TestAuthMiddlewareWithValidToken(t *testing.T) {
+func TestAuthMiddlewareWithValidCookie(t *testing.T) {
 
 	secret := []byte("test-secret")
 
@@ -160,9 +165,14 @@ func TestAuthMiddlewareWithValidToken(t *testing.T) {
 			nil,
 		)
 
-	req.Header.Set(
-		"Authorization",
-		"Bearer "+token,
+	req.AddCookie(
+
+		&http.Cookie{
+
+			Name: "token",
+
+			Value: token,
+		},
 	)
 
 	rec :=
@@ -226,9 +236,14 @@ func TestAuthMiddlewareRejectsWrongAlgorithm(t *testing.T) {
 			nil,
 		)
 
-	req.Header.Set(
-		"Authorization",
-		"Bearer "+tokenString,
+	req.AddCookie(
+
+		&http.Cookie{
+
+			Name: "token",
+
+			Value: tokenString,
+		},
 	)
 
 	rec :=
@@ -243,6 +258,76 @@ func TestAuthMiddlewareRejectsWrongAlgorithm(t *testing.T) {
 
 		t.Fatalf(
 			"esperaba 401 por algoritmo inválido, obtuve %d",
+			rec.Code,
+		)
+	}
+}
+
+func TestAuthMiddlewareWithEmptyCookie(
+	t *testing.T,
+) {
+
+	secret :=
+		[]byte(
+			"test-secret",
+		)
+
+	handler :=
+		AuthMiddleware(
+
+			secret,
+
+			http.HandlerFunc(
+
+				func(
+					w http.ResponseWriter,
+					r *http.Request,
+				) {
+
+					w.WriteHeader(
+						http.StatusOK,
+					)
+
+				},
+			),
+		)
+
+	req :=
+		httptest.NewRequest(
+
+			http.MethodGet,
+
+			"/",
+
+			nil,
+		)
+
+	req.AddCookie(
+
+		&http.Cookie{
+
+			Name: "token",
+
+			Value: "",
+		},
+	)
+
+	rec :=
+		httptest.NewRecorder()
+
+	handler.ServeHTTP(
+
+		rec,
+
+		req,
+	)
+
+	if rec.Code != http.StatusUnauthorized {
+
+		t.Fatalf(
+
+			"esperaba 401 con cookie vacía, obtuve %d",
+
 			rec.Code,
 		)
 	}

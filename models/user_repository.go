@@ -21,12 +21,12 @@ type User struct {
 // para acceder a usuarios.
 type UserRepositoryInterface interface {
 
-	// Busca un usuario por nombre.
+	// GetByUsername Busca un usuario por nombre.
 	GetByUsername(
 		username string,
 	) (User, error)
 
-	// Inserta un nuevo usuario.
+	// Create Inserta un nuevo usuario.
 	Create(
 		user *User,
 	) error
