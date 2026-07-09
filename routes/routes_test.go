@@ -9,20 +9,51 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-func createTestRouter(t *testing.T) http.Handler {
+func createTestRouter(
+	t *testing.T,
+) http.Handler {
 
 	t.Helper()
 
-	testDB := db.Open(":memory:")
+	t.Setenv(
+		"ADMIN_USERNAME",
+		"admin",
+	)
 
-	repo := models.BookRepository{
-		DB: testDB,
+	t.Setenv(
+		"ADMIN_PASSWORD",
+		"admin123",
+	)
+
+	testDB, err :=
+		db.Open(
+			":memory:",
+		)
+
+	if err != nil {
+
+		t.Fatalf(
+			"no se pudo abrir la base de datos de prueba: %v",
+			err,
+		)
+
 	}
 
+	repo :=
+		models.BookRepository{
+
+			DB: testDB,
+		}
+
 	return Router(
+
 		RouterConfig{
+
 			BookRepo: repo,
-			JWTKey:   []byte("test-secret"),
+
+			JWTKey: []byte(
+				"test-secret",
+			),
 		},
 	)
 }
