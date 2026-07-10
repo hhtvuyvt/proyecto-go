@@ -156,7 +156,7 @@ func (h AuthHandler) LoginHandler(
 // del usuario borrando la cookie.
 func (h AuthHandler) LogoutHandler(
 	w http.ResponseWriter,
-	r *http.Request,
+	_ *http.Request,
 ) {
 
 	http.SetCookie(

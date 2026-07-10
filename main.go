@@ -160,7 +160,7 @@ func main() {
 		)
 
 	log.Printf(
-		"Servidor iniciado en http://localhost:%s",
+		"servidor iniciado en http://localhost:%s",
 		port,
 	)
 
