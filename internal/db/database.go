@@ -30,9 +30,11 @@ func Open(
 	if err :=
 		database.Ping(); err != nil {
 
-		err := database.Close()
-		if err != nil {
-			return nil, err
+		if closeErr :=
+			database.Close(); closeErr != nil {
+
+			return nil, closeErr
+
 		}
 
 		return nil, err
@@ -44,9 +46,11 @@ func Open(
 			database,
 		); err != nil {
 
-		err := database.Close()
-		if err != nil {
-			return nil, err
+		if closeErr :=
+			database.Close(); closeErr != nil {
+
+			return nil, closeErr
+
 		}
 
 		return nil, err
@@ -58,9 +62,11 @@ func Open(
 			database,
 		); err != nil {
 
-		err := database.Close()
-		if err != nil {
-			return nil, err
+		if closeErr :=
+			database.Close(); closeErr != nil {
+
+			return nil, closeErr
+
 		}
 
 		return nil, err
@@ -68,4 +74,5 @@ func Open(
 	}
 
 	return database, nil
+
 }

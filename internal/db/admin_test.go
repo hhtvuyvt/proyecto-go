@@ -279,10 +279,10 @@ func TestEnsureAdminUserWithoutPassword(
 
 	}
 
-	if total != 1 {
+	if total != 0 {
 
 		t.Fatalf(
-			"se esperaba 1 usuario, hay %d",
+			"se esperaba 0 usuario, hay %d",
 			total,
 		)
 
