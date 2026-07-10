@@ -51,9 +51,7 @@ jobs:
 
 
       - name: Run linter (Go)
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
+        uses: golangci/golangci-lint-action@v8
 
 
 
