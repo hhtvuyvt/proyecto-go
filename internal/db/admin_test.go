@@ -151,9 +151,8 @@ func TestEnsureAdminUserAlreadyExists(
 		createTestDB(t)
 
 	defer func(database *sql.DB) {
-		err := database.Close()
-		if err != nil {
-
+		if err := database.Close(); err != nil {
+			t.Errorf("error cerrando la base de datos: %v", err)
 		}
 	}(database)
 
@@ -198,9 +197,8 @@ func TestEnsureAdminUserWithoutUsername(
 		createTestDB(t)
 
 	defer func(database *sql.DB) {
-		err := database.Close()
-		if err != nil {
-
+		if err := database.Close(); err != nil {
+			t.Errorf("error cerrando la base de datos: %v", err)
 		}
 	}(database)
 
@@ -237,9 +235,8 @@ func TestEnsureAdminUserWithoutPassword(
 		createTestDB(t)
 
 	defer func(database *sql.DB) {
-		err := database.Close()
-		if err != nil {
-
+		if err := database.Close(); err != nil {
+			t.Errorf("error cerrando la base de datos: %v", err)
 		}
 	}(database)
 
