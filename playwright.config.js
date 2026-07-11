@@ -1,4 +1,5 @@
 // playwright.config.js
+// noinspection JSUnusedGlobalSymbols
 
 import { defineConfig, devices } from "@playwright/test";
 
@@ -111,7 +112,13 @@ export default defineConfig({
                 "test-secret-key",
 
             DB_PATH:
-                "./test.db"
+                "./test.db",
+
+            ADMIN_USERNAME:
+                "admin",
+
+            ADMIN_PASSWORD:
+                "admin123"
 
         }
 
