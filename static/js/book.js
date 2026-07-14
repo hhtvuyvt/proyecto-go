@@ -315,9 +315,6 @@ bookList.addEventListener(
 			button.dataset.action ===
 			"delete"
 		) {
-
-            console.log("Entró al botón borrar");
-
 			const confirmed =
 				confirm(
 					"¿Eliminar este libro?",
@@ -363,8 +360,6 @@ bookList.addEventListener(
 				return;
 
 			}
-
-            console.log("Status DELETE:", response.status);
 
 			await loadBooks();
 

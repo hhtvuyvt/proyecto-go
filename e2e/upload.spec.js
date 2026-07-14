@@ -1,25 +1,48 @@
 import {
     test,
     expect
-}
-    from "@playwright/test";
+} from "@playwright/test";
 
+test.describe(
+    "Upload",
+    () => {
 
+        test.beforeEach(
+            async ({ page }) => {
 
-test(
-    "pagina carga sistema de imagen",
-    async({page})=>{
+                await page.goto("/");
 
+                await page.fill(
+                    "#loginUsername",
+                    "admin"
+                );
 
-        await page.goto("/");
+                await page.fill(
+                    "#loginPassword",
+                    "admin123"
+                );
 
+                await page.click(
+                    'button[type="submit"]'
+                );
 
+                await expect(
+                    page.locator("#appPanel")
+                ).toBeVisible();
 
-        await expect(
-            page.locator("#image")
-        )
-            .toBeVisible();
+            }
+        );
 
+        test(
+            "pagina carga sistema de imagen",
+            async ({ page }) => {
 
+                await expect(
+                    page.locator("#image")
+                ).toBeVisible();
 
-    });
+            }
+        );
+
+    }
+);
