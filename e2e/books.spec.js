@@ -108,7 +108,7 @@ test.describe(
         );
 
         test(
-            "borrar libro",
+            "borrar libro", // test de borrado
             async ({ page }) => {
 
                 const book =
