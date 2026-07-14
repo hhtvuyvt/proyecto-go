@@ -44,12 +44,11 @@ test.describe(
                     );
 
                     // Hacer clic en el botón de login
+                    // Esperar a que la aplicación sea visible (sin esperar específicamente el request)
                     await Promise.all([
-                        page.waitForResponse(
-                            response =>
-                                response.url().includes(
-                                    "/api/login"
-                                ) && response.status() === 200
+                        page.waitForSelector(
+                            "#appPanel:not(.d-none)",
+                            { timeout: 10000 }
                         ),
                         page.click(
                             "#loginForm button[type='submit']"
@@ -60,7 +59,8 @@ test.describe(
 
                 // Esperar a que carguen los libros
                 await page.waitForSelector(
-                    "#book-list"
+                    "#book-list",
+                    { timeout: 10000 }
                 );
 
             }
@@ -97,7 +97,8 @@ test.describe(
                             response.url().includes(
                                 "/api/books"
                             ) && response.request().method() === "POST"
-                            && response.status() === 200
+                            && response.status() === 200,
+                        { timeout: 10000 }
                     ),
                     page.click(
                         "#saveButton"
@@ -196,7 +197,8 @@ test.describe(
                         response =>
                             response.url().includes(
                                 "/api/books"
-                            ) && response.request().method() === "POST"
+                            ) && response.request().method() === "POST",
+                        { timeout: 10000 }
                     ),
                     page.click(
                         "#saveButton"
@@ -271,7 +273,8 @@ test.describe(
                         response =>
                             response.url().includes(
                                 "/api/books"
-                            ) && response.request().method() === "PUT"
+                            ) && response.request().method() === "PUT",
+                        { timeout: 10000 }
                     ),
                     page.click(
                         "#saveButton"
@@ -350,7 +353,8 @@ test.describe(
                         response =>
                             response.url().includes(
                                 "/api/books"
-                            ) && response.request().method() === "POST"
+                            ) && response.request().method() === "POST",
+                        { timeout: 10000 }
                     ),
                     page.click(
                         "#saveButton"
@@ -380,7 +384,8 @@ test.describe(
                         response =>
                             response.url().includes(
                                 "/api/books"
-                            ) && response.request().method() === "DELETE"
+                            ) && response.request().method() === "DELETE",
+                        { timeout: 10000 }
                     ),
                     book
                         .getByText(
