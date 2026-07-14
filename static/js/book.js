@@ -11,51 +11,51 @@
 // ===================================
 
 const API =
-    "/api/books";
+	"/api/books";
 
 let books = [];
 
 let editingBookId =
-    null;
+	null;
 
 // ===================================
 // Referencias del DOM
 // ===================================
 
 const form =
-    document.getElementById(
-        "book-form",
-    );
+	document.getElementById(
+		"book-form",
+	);
 
 const titleInput =
-    document.getElementById(
-        "title",
-    );
+	document.getElementById(
+		"title",
+	);
 
 const authorInput =
-    document.getElementById(
-        "author",
-    );
+	document.getElementById(
+		"author",
+	);
 
 const isbnInput =
-    document.getElementById(
-        "ISBN",
-    );
+	document.getElementById(
+		"ISBN",
+	);
 
 const imageInput =
-    document.getElementById(
-        "image",
-    );
+	document.getElementById(
+		"image",
+	);
 
 const saveButton =
-    document.getElementById(
-        "saveButton",
-    );
+	document.getElementById(
+		"saveButton",
+	);
 
 const bookList =
-    document.getElementById(
-        "book-list",
-    );
+	document.getElementById(
+		"book-list",
+	);
 
 // ===================================
 // Utilidades
@@ -63,29 +63,29 @@ const bookList =
 
 function resetForm() {
 
-    editingBookId = null;
+	editingBookId = null;
 
-    form.reset();
+	form.reset();
 
-    saveButton.innerText =
-        "Agregar";
+	saveButton.innerText =
+		"Agregar";
 
 }
 
 function sessionExpired() {
 
-    alert(
-        "La sesión ha expirado.",
-    );
+	alert(
+		"La sesión ha expirado.",
+	);
 
-    if (
-        typeof showLogin ===
-        "function"
-    ) {
+	if (
+		typeof showLogin ===
+		"function"
+	) {
 
-        showLogin();
+		showLogin();
 
-    }
+	}
 
 }
 
@@ -95,41 +95,39 @@ function sessionExpired() {
 
 async function loadBooks() {
 
-    try {
+	try {
 
-        const response =
-            await fetch(
-                API,
-                {
+		const response =
+			await fetch(
+				API, {
 
-                    credentials:
-                        "same-origin",
+					credentials: "same-origin",
 
-                },
-            );
+				},
+			);
 
-        if (
-            response.status === 401
-        ) {
+		if (
+			response.status === 401
+		) {
 
-            sessionExpired();
+			sessionExpired();
 
-            return;
+			return;
 
-        }
+		}
 
-        books =
-            await response.json();
+		books =
+			await response.json();
 
-        renderBooks();
+		renderBooks();
 
-    } catch (error) {
+	} catch (error) {
 
-        console.error(
-            error,
-        );
+		console.error(
+			error,
+		);
 
-    }
+	}
 
 }
 
@@ -139,27 +137,27 @@ async function loadBooks() {
 
 function renderBooks() {
 
-    bookList.innerHTML =
-        "";
+	bookList.innerHTML =
+		"";
 
-    books.forEach(
+	books.forEach(
 
-        function (
-            book,
-        ) {
+		function(
+			book,
+		) {
 
-            const card =
-                document.createElement(
-                    "div",
-                );
+			const card =
+				document.createElement(
+					"div",
+				);
 
-            card.className =
-                "book col-sm-6 col-md-4 col-lg-3";
+			card.className =
+				"book col-sm-6 col-md-4 col-lg-3";
 
-            card.dataset.id =
-                book.id;
+			card.dataset.id =
+				book.id;
 
-            card.innerHTML = `
+			card.innerHTML = `
 
 <div class="card h-100 shadow-sm">
 
@@ -210,13 +208,13 @@ Borrar
 
 `;
 
-            bookList.appendChild(
-                card,
-            );
+			bookList.appendChild(
+				card,
+			);
 
-        },
+		},
 
-    );
+	);
 
 }
 
@@ -228,151 +226,151 @@ Borrar
 // mediante delegación de eventos.
 bookList.addEventListener(
 
-    "click",
+	"click",
 
-    async function (
-        event,
-    ) {
+	async function(
+		event,
+	) {
 
-        const button =
-            event.target.closest(
-                "button",
-            );
+		const button =
+			event.target.closest(
+				"button",
+			);
 
-        if (!button) {
+		if (!button) {
 
-            return;
+			return;
 
-        }
+		}
 
-        const card =
-            button.closest(
-                ".book",
-            );
+		const card =
+			button.closest(
+				".book",
+			);
 
-        if (!card) {
+		if (!card) {
 
-            return;
+			return;
 
-        }
+		}
 
-        const id =
-            Number(
-                card.dataset.id,
-            );
+		const id =
+			Number(
+				card.dataset.id,
+			);
 
-        // ===========================
-        // Editar
-        // ===========================
+		// ===========================
+		// Editar
+		// ===========================
 
-        if (
-            button.dataset.action ===
-            "edit"
-        ) {
+		if (
+			button.dataset.action ===
+			"edit"
+		) {
 
-            const book =
-                books.find(
+			const book =
+				books.find(
 
-                    function (b) {
+					function(b) {
 
-                        return b.id === id;
+						return b.id === id;
 
-                    },
+					},
 
-                );
+				);
 
-            if (!book) {
+			if (!book) {
 
-                return;
+				return;
 
-            }
+			}
 
-            editingBookId =
-                id;
+			editingBookId =
+				id;
 
-            titleInput.value =
-                book.title;
+			titleInput.value =
+				book.title;
 
-            authorInput.value =
-                book.author;
+			authorInput.value =
+				book.author;
 
-            isbnInput.value =
-                book.isbn || "";
+			isbnInput.value =
+				book.isbn || "";
 
-            imageInput.value =
-                book.image || "";
+			imageInput.value =
+				book.image || "";
 
-            saveButton.innerText =
-                "Guardar cambios";
+			saveButton.innerText =
+				"Guardar cambios";
 
-            titleInput.focus();
+			titleInput.focus();
 
-        }
+		}
 
-        // ===========================
-        // Borrar
-        // ===========================
+		// ===========================
+		// Borrar
+		// ===========================
 
-        if (
-            button.dataset.action ===
-            "delete"
-        ) {
+		if (
+			button.dataset.action ===
+			"delete"
+		) {
 
-            const confirmed =
-                confirm(
-                    "¿Eliminar este libro?",
-                );
+            console.log("Entró al botón borrar");
 
-            if (!confirmed) {
+			const confirmed =
+				confirm(
+					"¿Eliminar este libro?",
+				);
 
-                return;
+			if (!confirmed) {
 
-            }
+				return;
 
-            const response =
-                await fetch(
+			}
 
-                    `${API}/${id}`,
+			const response =
+				await fetch(
 
-                    {
+					`${API}/${id}`,
 
-                        method:
-                            "DELETE",
+					{
 
-                        credentials:
-                            "same-origin",
+						method: "DELETE",
 
-                    },
+						credentials: "same-origin",
 
-                );
+					},
 
-            if (
-                response.status === 401
-            ) {
+				);
 
-                sessionExpired();
+			if (
+				response.status === 401
+			) {
 
-                return;
+				sessionExpired();
 
-            }
+				return;
 
-            if (
-                !response.ok
-            ) {
+			}
 
-                console.error(
-                    "No fue posible eliminar el libro.",
-                );
+			if (!response.ok) {
 
-                return;
+				console.error(
+					"No fue posible eliminar el libro.",
+				);
 
-            }
+				return;
 
-            await loadBooks();
+			}
 
-        }
+            console.log("Status DELETE:", response.status);
 
-    },
+			await loadBooks();
+
+		}
+
+	},
 
 );
 
@@ -382,126 +380,112 @@ bookList.addEventListener(
 
 form.addEventListener(
 
-    "submit",
+	"submit",
 
-    async function (
-        event,
-    ) {
+	async function(
+		event,
+	) {
 
-        event.preventDefault();
+		event.preventDefault();
 
-        const data = {
+		const data = {
 
-            title:
-                titleInput.value.trim(),
+			title: titleInput.value.trim(),
 
-            author:
-                authorInput.value.trim(),
+			author: authorInput.value.trim(),
 
-            isbn:
-                isbnInput.value.trim(),
+			isbn: isbnInput.value.trim(),
 
-            image:
-                imageInput.value.trim(),
+			image: imageInput.value.trim(),
 
-        };
+		};
 
-        let response;
+		let response;
 
-        if (
-            editingBookId ===
-            null
-        ) {
+		if (
+			editingBookId ===
+			null
+		) {
 
-            response =
-                await fetch(
+			response =
+				await fetch(
 
-                    API,
+					API,
 
-                    {
+					{
 
-                        method:
-                            "POST",
+						method: "POST",
 
-                        credentials:
-                            "same-origin",
+						credentials: "same-origin",
 
-                        headers: {
+						headers: {
 
-                            "Content-Type":
-                                "application/json",
+							"Content-Type": "application/json",
 
-                        },
+						},
 
-                        body:
-                            JSON.stringify(
-                                data,
-                            ),
+						body: JSON.stringify(
+							data,
+						),
 
-                    },
+					},
 
-                );
+				);
 
-        } else {
+		} else {
 
-            response =
-                await fetch(
+			response =
+				await fetch(
 
-                    `${API}/${editingBookId}`,
+					`${API}/${editingBookId}`,
 
-                    {
+					{
 
-                        method:
-                            "PUT",
+						method: "PUT",
 
-                        credentials:
-                            "same-origin",
+						credentials: "same-origin",
 
-                        headers: {
+						headers: {
 
-                            "Content-Type":
-                                "application/json",
+							"Content-Type": "application/json",
 
-                        },
+						},
 
-                        body:
-                            JSON.stringify(
-                                data,
-                            ),
+						body: JSON.stringify(
+							data,
+						),
 
-                    },
+					},
 
-                );
+				);
 
-        }
+		}
 
-        if (
-            response.status ===
-            401
-        ) {
+		if (
+			response.status ===
+			401
+		) {
 
-            sessionExpired();
+			sessionExpired();
 
-            return;
+			return;
 
-        }
+		}
 
-        if (
-            !response.ok
-        ) {
+		if (!response.ok) {
 
-            console.error(
-                "No fue posible guardar el libro.",
-            );
+			console.error(
+				"No fue posible guardar el libro.",
+			);
 
-            return;
+			return;
 
-        }
+		}
 
-        resetForm();
+		resetForm();
 
-        await loadBooks();
+		await loadBooks();
 
-    },
+	},
 
 );
