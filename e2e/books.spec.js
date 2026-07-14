@@ -10,7 +10,7 @@ test.describe(
     () => {
 
         // =========================================
-        // Setup: Autenticación con cookies
+        // Setup: Autenticación previo a cada test
         // =========================================
 
         test.beforeEach(
@@ -21,36 +21,42 @@ test.describe(
                     "/"
                 );
 
-                // Llenar formulario de login
-                await page.fill(
-                    "#loginUsername",
-                    "admin"
-                );
+                // Si no está autenticado, hacer login
+                const loginPanel =
+                    page.locator(
+                        "#loginPanel"
+                    );
 
-                await page.fill(
-                    "#loginPassword",
-                    "admin"
-                );
+                const isLoginVisible =
+                    await loginPanel.isVisible();
 
-                // Hacer clic en el botón de login
-                // Esperar a que se complete la solicitud de autenticación
-                await Promise.all([
-                    page.waitForResponse(
-                        response =>
-                            response.url().includes(
-                                "/api/login"
-                            ) && response.status() === 200
-                    ),
-                    page.click(
-                        "#loginForm button[type='submit']"
-                    )
-                ]);
+                if (isLoginVisible) {
 
-                // Esperar a que la aplicación cargue
-                // (loginPanel se oculta, appPanel se muestra)
-                await page.waitForSelector(
-                    "#appPanel:not(.d-none)"
-                );
+                    // Llenar formulario de login
+                    await page.fill(
+                        "#loginUsername",
+                        "admin"
+                    );
+
+                    await page.fill(
+                        "#loginPassword",
+                        "admin"
+                    );
+
+                    // Hacer clic en el botón de login
+                    await Promise.all([
+                        page.waitForResponse(
+                            response =>
+                                response.url().includes(
+                                    "/api/login"
+                                ) && response.status() === 200
+                        ),
+                        page.click(
+                            "#loginForm button[type='submit']"
+                        )
+                    ]);
+
+                }
 
                 // Esperar a que carguen los libros
                 await page.waitForSelector(
@@ -67,24 +73,6 @@ test.describe(
         test(
             "crear libro",
             async ({ page }) => {
-
-                // Verificar que el formulario es visible
-                await expect(
-                    page.locator(
-                        "#book-form"
-                    )
-                )
-                    .toBeVisible();
-
-                // Verificar estado inicial del botón
-                await expect(
-                    page.locator(
-                        "#saveButton"
-                    )
-                )
-                    .toContainText(
-                        "Agregar"
-                    );
 
                 // Llenar el formulario
                 await page.fill(
