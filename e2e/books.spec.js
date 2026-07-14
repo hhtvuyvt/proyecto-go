@@ -44,7 +44,7 @@ test.describe(
                     );
 
                     // Hacer clic en el botón de login
-                    // Esperar a que la aplicación sea visible (sin esperar específicamente el request)
+                    // Esperar a que la aplicación sea visible (UI update)
                     await Promise.all([
                         page.waitForSelector(
                             "#appPanel:not(.d-none)",
@@ -74,15 +74,18 @@ test.describe(
             "crear libro",
             async ({ page }) => {
 
-                // Llenar el formulario
+                // Llenar el formulario con datos únicos
+                const uniqueTitle =
+                    `Libro E2E ${Date.now()}`;
+
                 await page.fill(
                     "#title",
-                    "Libro E2E Test"
+                    uniqueTitle
                 );
 
                 await page.fill(
                     "#author",
-                    "Autor E2E"
+                    "Autor E2E Test"
                 );
 
                 await page.fill(
@@ -90,13 +93,18 @@ test.describe(
                     "978-1234567890"
                 );
 
-                // Hacer clic en guardar y esperar respuesta de API
+                await page.fill(
+                    "#image",
+                    "https://via.placeholder.com/150"
+                );
+
+                // POST /api/books (PÚBLICO, pero con credentials)
+                // Esperar respuesta y hacer clic
                 await Promise.all([
                     page.waitForResponse(
                         response =>
-                            response.url().includes(
-                                "/api/books"
-                            ) && response.request().method() === "POST"
+                            response.url().endsWith("/api/books")
+                            && response.request().method() === "POST"
                             && response.status() === 200,
                         { timeout: 10000 }
                     ),
@@ -111,7 +119,7 @@ test.describe(
                         ".book"
                     ).filter(
                         {
-                            hasText: "Libro E2E Test"
+                            hasText: uniqueTitle
                         }
                     );
 
@@ -119,14 +127,14 @@ test.describe(
                     book
                 )
                     .toContainText(
-                        "Libro E2E Test"
+                        uniqueTitle
                     );
 
                 await expect(
                     book
                 )
                     .toContainText(
-                        "Autor E2E"
+                        "Autor E2E Test"
                     );
 
                 await expect(
@@ -176,10 +184,13 @@ test.describe(
             "editar libro mantiene datos",
             async ({ page }) => {
 
-                // Crear un libro primero
+                // Crear un libro primero (datos únicos)
+                const originalTitle =
+                    `Original ${Date.now()}`;
+
                 await page.fill(
                     "#title",
-                    "Libro Original"
+                    originalTitle
                 );
 
                 await page.fill(
@@ -192,13 +203,12 @@ test.describe(
                     "111-1111111111"
                 );
 
+                // POST /api/books (PÚBLICO)
                 await Promise.all([
                     page.waitForResponse(
                         response =>
-                            response.url().includes(
-                                "/api/books"
-                            ) && response.request().method() === "POST",
-                        { timeout: 10000 }
+                            response.url().endsWith("/api/books")
+                            && response.request().method() === "POST"
                     ),
                     page.click(
                         "#saveButton"
@@ -211,7 +221,7 @@ test.describe(
                         ".book"
                     ).filter(
                         {
-                            hasText: "Libro Original"
+                            hasText: originalTitle
                         }
                     )
                         .first();
@@ -230,7 +240,7 @@ test.describe(
                     )
                 )
                     .toHaveValue(
-                        "Libro Original"
+                        originalTitle
                     );
 
                 await expect(
@@ -262,18 +272,21 @@ test.describe(
                     );
 
                 // Cambiar solo el título
+                const modifiedTitle =
+                    `Modificado ${Date.now()}`;
+
                 await page.fill(
                     "#title",
-                    "Libro Modificado"
+                    modifiedTitle
                 );
 
-                // Guardar cambios y esperar respuesta de API
+                // PUT /api/books/{id} (PROTEGIDA)
+                // Esperar respuesta y hacer clic
                 await Promise.all([
                     page.waitForResponse(
                         response =>
-                            response.url().includes(
-                                "/api/books"
-                            ) && response.request().method() === "PUT",
+                            response.url().includes("/api/books/")
+                            && response.request().method() === "PUT",
                         { timeout: 10000 }
                     ),
                     page.click(
@@ -287,7 +300,7 @@ test.describe(
                         ".book"
                     ).filter(
                         {
-                            hasText: "Libro Modificado"
+                            hasText: modifiedTitle
                         }
                     );
 
@@ -337,10 +350,13 @@ test.describe(
             "borrar libro",
             async ({ page }) => {
 
-                // Crear un libro primero
+                // Crear un libro primero (datos únicos)
+                const bookToDelete =
+                    `Eliminar ${Date.now()}`;
+
                 await page.fill(
                     "#title",
-                    "Libro para borrar"
+                    bookToDelete
                 );
 
                 await page.fill(
@@ -348,13 +364,12 @@ test.describe(
                     "Autor Temporal"
                 );
 
+                // POST /api/books (PÚBLICO)
                 await Promise.all([
                     page.waitForResponse(
                         response =>
-                            response.url().includes(
-                                "/api/books"
-                            ) && response.request().method() === "POST",
-                        { timeout: 10000 }
+                            response.url().endsWith("/api/books")
+                            && response.request().method() === "POST"
                     ),
                     page.click(
                         "#saveButton"
@@ -367,7 +382,7 @@ test.describe(
                         ".book"
                     ).filter(
                         {
-                            hasText: "Libro para borrar"
+                            hasText: bookToDelete
                         }
                     )
                         .first();
@@ -378,13 +393,13 @@ test.describe(
                     dialog => dialog.accept()
                 );
 
-                // Click en Borrar y esperar respuesta de API
+                // DELETE /api/books/{id} (PROTEGIDA)
+                // Esperar respuesta y hacer clic
                 await Promise.all([
                     page.waitForResponse(
                         response =>
-                            response.url().includes(
-                                "/api/books"
-                            ) && response.request().method() === "DELETE",
+                            response.url().includes("/api/books/")
+                            && response.request().method() === "DELETE",
                         { timeout: 10000 }
                     ),
                     book
@@ -400,7 +415,7 @@ test.describe(
                         ".book"
                     ).filter(
                         {
-                            hasText: "Libro para borrar"
+                            hasText: bookToDelete
                         }
                     )
                 )
