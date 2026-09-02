@@ -31,6 +31,8 @@ func setupBookTestDB(t *testing.T) *sql.DB {
 
 func TestCreateBook(t *testing.T) {
 	db := setupBookTestDB(t)
+	defer func() { _ = db.Close() }()
+
 	repo := BookRepository{DB: db}
 
 	book := Book{Title: "Test"}
