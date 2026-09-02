@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Arquitectura real del sistema de libros",
+    "output": "system-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/hhtvuyvt/proyecto-go.git",
+      "revision": "5b13127fa1bb5871cb7477c4138aa7c1750b204a"
+    }
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "external",
+      "label": "Navegador",
+      "sublabel": "HTML + JavaScript",
+      "pos": [40, 300],
+      "size": [150, 70],
+      "sources": [
+        { "path": "static/index.html" },
+        { "path": "static/js/auth.js" },
+        { "path": "static/js/book.js" }
+      ]
+    },
+    {
+      "id": "http-server",
+      "type": "backend",
+      "label": "Servidor HTTP Go",
+      "sublabel": "net/http :PORT",
+      "pos": [220, 300],
+      "size": [160, 70],
+      "sources": [
+        { "path": "main.go" }
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend estatico",
+      "sublabel": "static/ servido por Go",
+      "pos": [220, 145],
+      "size": [160, 70],
+      "sources": [
+        { "path": "static/index.html" }
+      ]
+    },
+    {
+      "id": "middlewares",
+      "type": "security",
+      "label": "Middlewares",
+      "sublabel": "recovery, logger, JWT",
+      "pos": [410, 300],
+      "size": [160, 70],
+      "sources": [
+        { "path": "middlewares/middleware.go" },
+        { "path": "middlewares/auth.go" }
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Router",
+      "sublabel": "http.ServeMux",
+      "pos": [600, 300],
+      "size": [150, 70],
+      "sources": [
+        { "path": "routes/router.go" }
+      ]
+    },
+    {
+      "id": "handlers",
+      "type": "backend",
+      "label": "Handlers HTTP",
+      "sublabel": "auth, books, upload",
+      "pos": [800, 300],
+      "size": [170, 70],
+      "sources": [
+        { "path": "handlers/auth.go" },
+        { "path": "handlers/book.go" },
+        { "path": "handlers/upload.go" }
+      ]
+    },
+    {
+      "id": "book-repository",
+      "type": "backend",
+      "label": "BookRepository",
+      "sublabel": "CRUD de books",
+      "pos": [1000, 235],
+      "size": [170, 70],
+      "sources": [
+        { "path": "models/book_repository.go" },
+        { "path": "models/book.go" }
+      ]
+    },
+    {
+      "id": "user-repository",
+      "type": "backend",
+      "label": "UserRepository",
+      "sublabel": "usuarios y hashes",
+      "pos": [1000, 390],
+      "size": [170, 70],
+      "sources": [
+        { "path": "models/user_repository.go" },
+        { "path": "internal/db/admin.go" }
+      ]
+    },
+    {
+      "id": "sqlite",
+      "type": "database",
+      "label": "SQLite",
+      "sublabel": "books + users",
+      "pos": [1200, 300],
+      "size": [150, 70],
+      "sources": [
+        { "path": "internal/db/database.go" },
+        { "path": "internal/db/schema.go" }
+      ]
+    },
+    {
+      "id": "uploads",
+      "type": "backend",
+      "label": "uploads/",
+      "sublabel": "archivos locales",
+      "pos": [1000, 540],
+      "size": [170, 70],
+      "sources": [
+        { "path": "handlers/upload.go" },
+        { "path": "routes/router.go" }
+      ]
+    },
+    {
+      "id": "bootstrap-cdn",
+      "type": "cloud",
+      "label": "Bootstrap CDN",
+      "sublabel": "Bootstrap 5.3",
+      "pos": [40, 145],
+      "size": [150, 70],
+      "sources": [
+        { "path": "static/index.html" }
+      ]
+    },
+    {
+      "id": "playwright",
+      "type": "external",
+      "label": "Playwright E2E",
+      "sublabel": "Chromium + go run .",
+      "pos": [40, 700],
+      "size": [150, 70],
+      "sources": [
+        { "path": "playwright.config.js" },
+        { "path": "e2e/auth.spec.js" },
+        { "path": "e2e/books.spec.js" }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "browser-http",
+      "from": "browser",
+      "to": "http-server",
+      "label": "HTTP: API y archivos",
+      "variant": "emphasis",
+      "labelDy": -29
+    },
+    {
+      "id": "server-frontend",
+      "from": "http-server",
+      "to": "frontend",
+      "label": "sirve /static",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [[300, 240], [400, 240], [400, 180]]
+    },
+    {
+      "id": "browser-bootstrap",
+      "from": "browser",
+      "to": "bootstrap-cdn",
+      "label": "carga CDN",
+      "fromSide": "top",
+      "toSide": "right",
+      "variant": "dashed"
+    },
+    {
+      "id": "http-middlewares",
+      "from": "http-server",
+      "to": "middlewares",
+      "label": "pipeline HTTP",
+      "labelDy": -29
+    },
+    {
+      "id": "jwt-cookie",
+      "from": "browser",
+      "to": "middlewares",
+      "label": "cookie HttpOnly con JWT",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [[20, 335], [20, 120], [490, 120]],
+      "labelAt": [250, 120],
+      "variant": "security"
+    },
+    {
+      "id": "middlewares-router",
+      "from": "middlewares",
+      "to": "router",
+      "label": "valida y enruta",
+      "labelDy": -29
+    },
+    {
+      "id": "router-handlers",
+      "from": "router",
+      "to": "handlers",
+      "label": "rutas /api",
+      "labelAt": [765, 384]
+    },
+    {
+      "id": "handlers-books",
+      "from": "handlers",
+      "to": "book-repository",
+      "label": "CRUD de libros",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [1050, 319]
+    },
+    {
+      "id": "handlers-users",
+      "from": "handlers",
+      "to": "user-repository",
+      "label": "login y usuarios",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [980, 474]
+    },
+    {
+      "id": "repositories-sqlite-books",
+      "from": "book-repository",
+      "to": "sqlite",
+      "label": "SQL parametrizado",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "repositories-sqlite-users",
+      "from": "user-repository",
+      "to": "sqlite",
+      "label": "SQL de users",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "handlers-uploads",
+      "from": "handlers",
+      "to": "uploads",
+      "label": "multipart /api/upload",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "playwright-http",
+      "from": "playwright",
+      "to": "http-server",
+      "label": "pruebas E2E",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "variant": "dashed"
+    }
+  ]
+}
