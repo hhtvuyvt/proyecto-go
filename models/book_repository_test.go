@@ -7,7 +7,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func setupTestDB(t *testing.T) *sql.DB {
+func setupBookTestDB(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatalf("error DB: %v", err)
@@ -30,7 +30,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 }
 
 func TestCreateBook(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupBookTestDB(t)
 	repo := BookRepository{DB: db}
 
 	book := Book{Title: "Test"}

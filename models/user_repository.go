@@ -26,6 +26,8 @@ type UserRepositoryInterface interface {
 		username string,
 	) (User, error)
 
+	GetByID(id int64) (User, error)
+
 	// Create Inserta un nuevo usuario.
 	Create(
 		user *User,
@@ -49,34 +51,38 @@ func (r UserRepository) GetByUsername(
 
 	var user User
 
-	err :=
-		r.DB.QueryRow(
-			`
-SELECT
+	err := r.DB.QueryRow(`
+		SELECT id, username, password_hash, created_at
+		FROM users
+		WHERE username = ?
+	`, username).Scan(
+		&user.ID,
+		&user.Username,
+		&user.PasswordHash,
+		&user.CreatedAt,
+	)
 
-	id,
+	return user, err
+}
 
-	username,
+// Create inserta un nuevo usuario en la tabla de la base de datos.
+// Modifica el puntero del objeto 'user' agregándole el ID generado tras la inserción.
+func (r UserRepository) GetByID(
+	id int64,
+) (User, error) {
 
-	password_hash,
+	var user User
 
-	created_at
-
-FROM users
-
-WHERE username = ?
-`,
-			username,
-		).Scan(
-
-			&user.ID,
-
-			&user.Username,
-
-			&user.PasswordHash,
-
-			&user.CreatedAt,
-		)
+	err := r.DB.QueryRow(`
+		SELECT id, username, password_hash, created_at
+		FROM users
+		WHERE id = ?
+	`, id).Scan(
+		&user.ID,
+		&user.Username,
+		&user.PasswordHash,
+		&user.CreatedAt,
+	)
 
 	return user, err
 }
@@ -86,84 +92,23 @@ func (r UserRepository) Create(
 	user *User,
 ) error {
 
-	result, err :=
-		r.DB.Exec(
-			`
-INSERT INTO users(
-
-	username,
-
-	password_hash
-
-)
-
-VALUES(
-
-	?,
-
-	?
-
-)
-`,
-			user.Username,
-
-			user.PasswordHash,
-		)
+	result, err := r.DB.Exec(`
+		INSERT INTO users (username, password_hash)
+		VALUES (?, ?)
+	`, user.Username, user.PasswordHash)
 
 	if err != nil {
-
 		return err
-
 	}
 
 	id, err :=
 		result.LastInsertId()
 
 	if err != nil {
-
 		return err
-
 	}
 
 	user.ID = id
 
 	return nil
-}
-
-func (r UserRepository) GetByID(
-	id int64,
-) (User, error) {
-
-	var user User
-
-	err :=
-		r.DB.QueryRow(
-			`
-SELECT
-
-	id,
-
-	username,
-
-	password_hash,
-
-	created_at
-
-FROM users
-
-WHERE id = ?
-`,
-			id,
-		).Scan(
-
-			&user.ID,
-
-			&user.Username,
-
-			&user.PasswordHash,
-
-			&user.CreatedAt,
-		)
-
-	return user, err
 }

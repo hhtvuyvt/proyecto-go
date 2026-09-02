@@ -2,125 +2,94 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
 
-
 jobs:
-
   ci:
-
     runs-on: ubuntu-latest
 
-
     steps:
-
       # 📥 Clonar repo
       - name: Checkout code
         uses: actions/checkout@v4
-
-
 
       # =========================
       # 🟦 BACKEND (Go)
       # =========================
 
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
-
-
+          go-version-file: "go.mod"
 
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
-
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
 
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-
-
       - name: Install dependencies
         run: go mod tidy
-
-
 
       - name: Run linter (Go)
         uses: golangci/golangci-lint-action@v8
 
+      # NUEVO: ANÁLISIS DE SEGURIDAD (SAST y SCA)
+      # Analiza tu propio código fuente en busca de malas prácticas de seguridad
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: ./...
 
+      # Analiza si tus dependencias (go.mod) tienen vulnerabilidades conocidas
+      - name: Run Govulncheck (Dependency Scanner)
+        uses: golang/govulncheck-action@v1
+      # -------------------------------------------------------
 
       - name: Run tests with coverage
         run: go test ./... -coverprofile=coverage.out
 
-
-
       - name: Show coverage
         run: go tool cover -func=coverage.out
-
-
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
-
           name: coverage
 
           path: coverage.out
 
-
-
       - name: Build backend
         run: go build ./...
-
-
-
-
 
       # =========================
       # 🟨 FRONTEND (HTML)
       # =========================
 
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-
-          node-version: '24'
-
-
+          node-version: "24"
 
       - name: Install HTMLHint
         run: npm install -g htmlhint
 
-
-
       - name: Lint HTML
         run: htmlhint "static/**/*.html"
-
-
-
-
 
       # =========================
       # 🧪 E2E (Playwright)
       # =========================
 
-
       - name: Install Node dependencies
         run: npm install
 
-
-
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-
-
 
       # Crear base aislada para pruebas
       - name: Prepare E2E database
@@ -130,20 +99,12 @@ jobs:
 
           rm -f data/test.db
 
-
-
-
       - name: Run E2E tests
         run: npm run test:e2e
-
-
-
-
 
       # =========================
       # 🚨 Coverage mínimo
       # =========================
-
 
       - name: Check coverage
         run: |

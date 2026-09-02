@@ -44,6 +44,14 @@ func (fakeUserRepo) Create(
 
 }
 
+func (fakeUserRepo) GetByID(id int64) (models.User, error) {
+	// Retornamos un usuario simulado rápido para que compile y pase el test
+	return models.User{
+		ID:       id,
+		Username: "admin",
+	}, nil
+}
+
 func TestLoginHandler(
 	t *testing.T,
 ) {
