@@ -9,190 +9,91 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-func createTestRouter(
-	t *testing.T,
-) http.Handler {
-
+func createTestRouter(t *testing.T) http.Handler {
 	t.Helper()
 
-	t.Setenv(
-		"ADMIN_USERNAME",
-		"admin",
-	)
+	t.Setenv("ADMIN_USERNAME", "admin")
+	t.Setenv("ADMIN_PASSWORD", "admin123")
 
-	t.Setenv(
-		"ADMIN_PASSWORD",
-		"admin123",
-	)
-
-	testDB, err :=
-		db.Open(
-			":memory:",
-		)
-
+	testDB, err := db.Open(":memory:")
 	if err != nil {
-
-		t.Fatalf(
-			"no se pudo abrir la base de datos de prueba: %v",
-			err,
-		)
-
+		t.Fatalf("no se pudo abrir la base de datos de prueba: %v", err)
 	}
 
-	repo :=
-		models.BookRepository{
-
-			DB: testDB,
-		}
+	bookRepo := &models.BookRepository{DB: testDB}
+	userRepo := &models.UserRepository{DB: testDB}
 
 	return Router(
-
 		RouterConfig{
-
-			BookRepo: repo,
-
-			JWTKey: []byte(
-				"test-secret",
-			),
+			BookRepo: bookRepo,
+			UserRepo: userRepo,
+			JWTKey:   []byte("test-secret"),
 		},
 	)
 }
 
 func TestRouterRedirect(t *testing.T) {
-
 	router := createTestRouter(t)
 
-	req :=
-		httptest.NewRequest(
-			http.MethodGet,
-			"/",
-			nil,
-		)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
 
-	rec :=
-		httptest.NewRecorder()
-
-	router.ServeHTTP(
-		rec,
-		req,
-	)
+	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusTemporaryRedirect {
-		t.Fatalf(
-			"esperaba redirect %d, obtuvo %d",
-			http.StatusTemporaryRedirect,
-			rec.Code,
-		)
+		t.Fatalf("esperaba redirect %d, obtuvo %d", http.StatusTemporaryRedirect, rec.Code)
 	}
-
 }
 
 func TestRouterStatic(t *testing.T) {
-
 	router := createTestRouter(t)
 
-	req :=
-		httptest.NewRequest(
-			http.MethodGet,
-			"/static/index.html",
-			nil,
-		)
+	req := httptest.NewRequest(http.MethodGet, "/static/index.html", nil)
+	rec := httptest.NewRecorder()
 
-	rec :=
-		httptest.NewRecorder()
-
-	router.ServeHTTP(
-		rec,
-		req,
-	)
+	router.ServeHTTP(rec, req)
 
 	if rec.Code == http.StatusNotFound {
-		t.Fatal(
-			"ruta static no configurada",
-		)
+		t.Fatal("ruta static no configurada")
 	}
-
 }
 
 func TestRouterLoginRoute(t *testing.T) {
-
 	router := createTestRouter(t)
 
-	req :=
-		httptest.NewRequest(
-			http.MethodPost,
-			"/api/login",
-			nil,
-		)
+	req := httptest.NewRequest(http.MethodPost, "/api/login", nil)
+	rec := httptest.NewRecorder()
 
-	rec :=
-		httptest.NewRecorder()
-
-	router.ServeHTTP(
-		rec,
-		req,
-	)
+	router.ServeHTTP(rec, req)
 
 	if rec.Code == http.StatusNotFound {
-		t.Fatal(
-			"ruta /api/login no existe",
-		)
+		t.Fatal("ruta /api/login no existe")
 	}
-
 }
 
 func TestRouterBooksPublicRoute(t *testing.T) {
-
 	router := createTestRouter(t)
 
-	req :=
-		httptest.NewRequest(
-			http.MethodGet,
-			"/api/books",
-			nil,
-		)
+	req := httptest.NewRequest(http.MethodGet, "/api/books", nil)
+	rec := httptest.NewRecorder()
 
-	rec :=
-		httptest.NewRecorder()
-
-	router.ServeHTTP(
-		rec,
-		req,
-	)
+	router.ServeHTTP(rec, req)
 
 	if rec.Code == http.StatusNotFound {
-		t.Fatal(
-			"ruta /api/books no existe",
-		)
+		t.Fatal("ruta /api/books no existe")
 	}
-
 }
 
 func TestRouterProtectedBooks(t *testing.T) {
-
 	router := createTestRouter(t)
 
-	req :=
-		httptest.NewRequest(
-			http.MethodDelete,
-			"/api/books/1",
-			nil,
-		)
+	req := httptest.NewRequest(http.MethodDelete, "/api/books/1", nil)
+	rec := httptest.NewRecorder()
 
-	rec :=
-		httptest.NewRecorder()
-
-	router.ServeHTTP(
-		rec,
-		req,
-	)
+	router.ServeHTTP(rec, req)
 
 	// Sin JWT debe bloquear
 	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf(
-			"esperaba 401 sin token, obtuvo %d",
-			rec.Code,
-		)
+		t.Fatalf("esperaba 401 sin token, obtuvo %d", rec.Code)
 	}
-
 }

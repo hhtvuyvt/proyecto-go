@@ -2,73 +2,30 @@ package db
 
 import "database/sql"
 
-// CreateSchema crea todas las tablas
-// necesarias para la aplicación.
-func CreateSchema(
-	db *sql.DB,
-) error {
+// CreateSchema crea todas las tablas necesarias para la aplicación.
+func CreateSchema(db *sql.DB) error {
+	const schema = `
+	CREATE TABLE IF NOT EXISTS books (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		title TEXT NOT NULL,
+		author TEXT NOT NULL,
+		isbn TEXT NOT NULL,
+		image TEXT NOT NULL
+	);
 
-	const books = `
-CREATE TABLE IF NOT EXISTS books(
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		username TEXT NOT NULL UNIQUE,
+		password_hash TEXT NOT NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
 
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+	`
 
-	title TEXT NOT NULL,
-
-	author TEXT NOT NULL,
-
-	isbn TEXT NOT NULL,
-
-	image TEXT NOT NULL
-
-);`
-
-	if _, err :=
-		db.Exec(
-			books,
-		); err != nil {
-
+	if _, err := db.Exec(schema); err != nil {
 		return err
-
-	}
-
-	const users = `
-CREATE TABLE IF NOT EXISTS users(
-
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-	username TEXT NOT NULL UNIQUE,
-
-	password_hash TEXT NOT NULL,
-
-	created_at DATETIME NOT NULL
-	DEFAULT CURRENT_TIMESTAMP
-
-);`
-
-	if _, err :=
-		db.Exec(
-			users,
-		); err != nil {
-
-		return err
-
-	}
-
-	const usersIndex = `
-CREATE INDEX IF NOT EXISTS idx_users_username
-ON users(username);
-`
-
-	if _, err :=
-		db.Exec(
-			usersIndex,
-		); err != nil {
-
-		return err
-
 	}
 
 	return nil
-
 }

@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 📥 Clonar repo
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -29,29 +28,24 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Install dependencies
-        run: go mod tidy
+      - name: Download Go modules
+        run: go mod download
 
       - name: Run linter (Go)
         uses: golangci/golangci-lint-action@v8
 
-      # NUEVO: ANÁLISIS DE SEGURIDAD (SAST y SCA)
-      # Analiza tu propio código fuente en busca de malas prácticas de seguridad
       - name: Run Gosec Security Scanner
-        uses: securego/gosec@master
+        uses: securego/gosec@v2.20.0
         with:
           args: ./...
 
-      # Analiza si tus dependencias (go.mod) tienen vulnerabilidades conocidas
       - name: Run Govulncheck (Dependency Scanner)
         uses: golang/govulncheck-action@v1
-      # -------------------------------------------------------
 
       - name: Run tests with coverage
-        run: go test ./... -coverprofile=coverage.out
+        run: go test -v ./... -coverprofile=coverage.out
 
       - name: Show coverage
         run: go tool cover -func=coverage.out
@@ -60,11 +54,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage
-
           path: coverage.out
 
       - name: Build backend
-        run: go build ./...
+        run: go build -v ./...
 
       # =========================
       # 🟨 FRONTEND (HTML)
@@ -91,12 +84,9 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      # Crear base aislada para pruebas
       - name: Prepare E2E database
         run: |
-
           mkdir -p data
-
           rm -f data/test.db
 
       - name: Run E2E tests
@@ -108,11 +98,7 @@ jobs:
 
       - name: Check coverage
         run: |
-
           total=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
-
           echo "Coverage: $total%"
-
           min=60
-
           awk "BEGIN {exit !($total >= $min)}"

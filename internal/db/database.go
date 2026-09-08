@@ -3,76 +3,31 @@ package db
 import (
 	"database/sql"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
-// Open abre la base de datos,
-// crea el esquema
-// y garantiza la existencia
-// del usuario administrador.
-func Open(
-	path string,
-) (*sql.DB, error) {
-
-	database, err :=
-		sql.Open(
-			"sqlite3",
-			path,
-		)
-
+// Open abre la base de datos, crea el esquema y garantiza la existencia del usuario administrador.
+func Open(path string) (*sql.DB, error) {
+	database, err := sql.Open("sqlite", path)
 	if err != nil {
-
 		return nil, err
-
 	}
 
 	// Comprueba que la conexión realmente funciona.
-	if err :=
-		database.Ping(); err != nil {
-
-		if closeErr :=
-			database.Close(); closeErr != nil {
-
-			return nil, closeErr
-
-		}
-
+	if err := database.Ping(); err != nil {
+		_ = database.Close()
 		return nil, err
-
 	}
 
-	if err :=
-		CreateSchema(
-			database,
-		); err != nil {
-
-		if closeErr :=
-			database.Close(); closeErr != nil {
-
-			return nil, closeErr
-
-		}
-
+	if err := CreateSchema(database); err != nil {
+		_ = database.Close()
 		return nil, err
-
 	}
 
-	if err :=
-		EnsureAdminUser(
-			database,
-		); err != nil {
-
-		if closeErr :=
-			database.Close(); closeErr != nil {
-
-			return nil, closeErr
-
-		}
-
+	if err := EnsureAdminUser(database); err != nil {
+		_ = database.Close()
 		return nil, err
-
 	}
 
 	return database, nil
-
 }

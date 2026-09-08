@@ -131,15 +131,13 @@ func main() {
 	// Repositorios
 	// ==========================
 
-	bookRepo :=
-		models.BookRepository{
-			DB: sqlDB,
-		}
+	bookRepo := &models.BookRepository{
+		DB: sqlDB,
+	}
 
-	userRepo :=
-		models.UserRepository{
-			DB: sqlDB,
-		}
+	userRepo := &models.UserRepository{
+		DB: sqlDB,
+	}
 
 	// ==========================
 	// Router

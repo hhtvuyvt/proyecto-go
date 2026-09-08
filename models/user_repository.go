@@ -7,35 +7,20 @@ import (
 
 // User representa un usuario del sistema.
 type User struct {
-	ID int64 `json:"id"`
-
-	Username string `json:"username"`
-
-	// Nunca debe enviarse al frontend.
-	PasswordHash string `json:"-"`
-
-	CreatedAt time.Time `json:"created_at"`
+	ID           int64     `json:"id"`
+	Username     string    `json:"username"`
+	PasswordHash string    `json:"-"` // Nunca debe enviarse al frontend.
+	CreatedAt    time.Time `json:"created_at"`
 }
 
-// UserRepositoryInterface define el contrato
-// para acceder a usuarios.
+// UserRepositoryInterface define el contrato para acceder a usuarios.
 type UserRepositoryInterface interface {
-
-	// GetByUsername Busca un usuario por nombre.
-	GetByUsername(
-		username string,
-	) (User, error)
-
+	GetByUsername(username string) (User, error)
 	GetByID(id int64) (User, error)
-
-	// Create Inserta un nuevo usuario.
-	Create(
-		user *User,
-	) error
+	Create(user *User) error
 }
 
-// UserRepository implementa
-// UserRepositoryInterface usando SQLite.
+// UserRepository implementa UserRepositoryInterface usando SQLite.
 type UserRepository struct {
 	DB *sql.DB
 }
@@ -43,14 +28,9 @@ type UserRepository struct {
 // Comprobación en tiempo de compilación.
 var _ UserRepositoryInterface = (*UserRepository)(nil)
 
-// GetByUsername obtiene un usuario
-// usando su nombre.
-func (r UserRepository) GetByUsername(
-	username string,
-) (User, error) {
-
+// GetByUsername obtiene un usuario usando su nombre.
+func (r *UserRepository) GetByUsername(username string) (User, error) {
 	var user User
-
 	err := r.DB.QueryRow(`
 		SELECT id, username, password_hash, created_at
 		FROM users
@@ -65,14 +45,9 @@ func (r UserRepository) GetByUsername(
 	return user, err
 }
 
-// Create inserta un nuevo usuario en la tabla de la base de datos.
-// Modifica el puntero del objeto 'user' agregándole el ID generado tras la inserción.
-func (r UserRepository) GetByID(
-	id int64,
-) (User, error) {
-
+// GetByID obtiene un usuario usando su ID.
+func (r *UserRepository) GetByID(id int64) (User, error) {
 	var user User
-
 	err := r.DB.QueryRow(`
 		SELECT id, username, password_hash, created_at
 		FROM users
@@ -87,28 +62,22 @@ func (r UserRepository) GetByID(
 	return user, err
 }
 
-// Create inserta un usuario.
-func (r UserRepository) Create(
-	user *User,
-) error {
-
+// Create inserta un nuevo usuario en la base de datos y le asigna el ID generado.
+func (r *UserRepository) Create(user *User) error {
 	result, err := r.DB.Exec(`
-		INSERT INTO users (username, password_hash)
-		VALUES (?, ?)
+		SELECT id, username, password_hash, created_at
+		FROM users
+		WHERE id = ?
 	`, user.Username, user.PasswordHash)
-
 	if err != nil {
 		return err
 	}
 
-	id, err :=
-		result.LastInsertId()
-
+	id, err := result.LastInsertId()
 	if err != nil {
 		return err
 	}
 
 	user.ID = id
-
 	return nil
 }

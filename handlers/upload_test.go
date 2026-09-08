@@ -11,207 +11,92 @@ import (
 	"testing"
 )
 
-func createMultipartImage(
-	t *testing.T,
-) (*http.Request, string) {
-
+func createMultipartImage(t *testing.T) (*http.Request, string) {
 	t.Helper()
 
-	body :=
-		&bytes.Buffer{}
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
 
-	writer :=
-		multipart.NewWriter(body)
-
-	part, err :=
-		writer.CreateFormFile(
-			"image",
-			"test.jpg",
-		)
-
+	part, err := writer.CreateFormFile("image", "test.jpg")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err =
-		part.Write(
-			[]byte(
-				"fake image content",
-			),
-		)
-
-	if err != nil {
+	if _, err = part.Write([]byte("fake image content")); err != nil {
 		t.Fatal(err)
 	}
 
-	if err :=
-		writer.Close(); err != nil {
-
+	if err := writer.Close(); err != nil {
 		t.Fatal(err)
 	}
 
-	req :=
-		httptest.NewRequest(
-			http.MethodPost,
-			"/api/upload",
-			body,
-		)
-
-	req.Header.Set(
-		"Content-Type",
-		writer.FormDataContentType(),
-	)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	return req, "test.jpg"
 }
 
-func TestUploadImageSuccess(
-	t *testing.T,
-) {
-
+func TestUploadImageSuccess(t *testing.T) {
 	_ = os.RemoveAll("uploads")
-
 	defer func() {
 		_ = os.RemoveAll("uploads")
 	}()
 
-	req, filename :=
-		createMultipartImage(t)
+	req, filename := createMultipartImage(t)
+	rec := httptest.NewRecorder()
 
-	rec :=
-		httptest.NewRecorder()
-
-	UploadImage(
-		rec,
-		req,
-	)
+	UploadImage(rec, req)
 
 	if rec.Code != http.StatusOK {
-
-		t.Fatalf(
-			"esperado 200 recibido %d",
-			rec.Code,
-		)
+		t.Fatalf("esperado 200 recibido %d", rec.Code)
 	}
 
 	var response UploadResponse
-
-	err :=
-		json.NewDecoder(
-			rec.Body,
-		).Decode(
-			&response,
-		)
-
-	if err != nil {
+	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
 		t.Fatal(err)
 	}
 
-	expected :=
-		"/uploads/" + filename
-
+	expected := "/uploads/" + filename
 	if response.Path != expected {
-
-		t.Fatalf(
-			"ruta incorrecta esperada %s recibida %s",
-			expected,
-			response.Path,
-		)
+		t.Fatalf("ruta incorrecta esperada %s recibida %s", expected, response.Path)
 	}
 
-	filePath :=
-		filepath.Join(
-			"uploads",
-			filename,
-		)
-
+	filePath := filepath.Join("uploads", filename)
 	if _, err := os.Stat(filePath); err != nil {
-
-		t.Fatalf(
-			"archivo no creado: %v",
-			err,
-		)
+		t.Fatalf("archivo no creado: %v", err)
 	}
-
 }
 
-func TestUploadImageSinArchivo(
-	t *testing.T,
-) {
-
+func TestUploadImageSinArchivo(t *testing.T) {
 	_ = os.RemoveAll("uploads")
-
 	defer func() {
 		_ = os.RemoveAll("uploads")
 	}()
 
-	req :=
-		httptest.NewRequest(
-			http.MethodPost,
-			"/api/upload",
-			nil,
-		)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload", nil)
+	rec := httptest.NewRecorder()
 
-	rec :=
-		httptest.NewRecorder()
-
-	UploadImage(
-		rec,
-		req,
-	)
+	UploadImage(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
-
-		t.Fatalf(
-			"esperado 400 recibido %d",
-			rec.Code,
-		)
+		t.Fatalf("esperado 400 recibido %d", rec.Code)
 	}
-
 }
 
-func TestUploadImageMultipartVacio(
-	t *testing.T,
-) {
-
-	body :=
-		&bytes.Buffer{}
-
-	writer :=
-		multipart.NewWriter(body)
-
-	if err :=
-		writer.Close(); err != nil {
-
+func TestUploadImageMultipartVacio(t *testing.T) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	if err := writer.Close(); err != nil {
 		t.Fatal(err)
 	}
 
-	req :=
-		httptest.NewRequest(
-			http.MethodPost,
-			"/api/upload",
-			body,
-		)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	req.Header.Set(
-		"Content-Type",
-		writer.FormDataContentType(),
-	)
-
-	rec :=
-		httptest.NewRecorder()
-
-	UploadImage(
-		rec,
-		req,
-	)
+	rec := httptest.NewRecorder()
+	UploadImage(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
-
-		t.Fatalf(
-			"esperado 400 recibido %d",
-			rec.Code,
-		)
+		t.Fatalf("esperado 400 recibido %d", rec.Code)
 	}
-
 }
