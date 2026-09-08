@@ -30,7 +30,9 @@ func setupUserTestDB(t *testing.T) *sql.DB {
 	);`
 
 	if _, err := db.Exec(query); err != nil {
-		db.Close()
+		if err := db.Close(); err != nil {
+			t.Errorf("error cerrando la base de datos: %v", err)
+		}
 		t.Fatalf("Error al crear la tabla de pruebas: %v", err)
 	}
 
@@ -41,7 +43,11 @@ func setupUserTestDB(t *testing.T) *sql.DB {
 // correctamente y luego recuperarlo tanto por ID como por Username.
 func TestUserRepository_Create_And_Get(t *testing.T) {
 	db := setupUserTestDB(t)
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("error cerrando la base de datos: %v", err)
+		}
+	}()
 
 	repo := &UserRepository{DB: db}
 
@@ -87,7 +93,11 @@ func TestUserRepository_Create_And_Get(t *testing.T) {
 // cuando se busca un usuario o un ID que no existen en la base de datos.
 func TestUserRepository_Get_NotFound(t *testing.T) {
 	db := setupUserTestDB(t)
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("error cerrando la base de datos: %v", err)
+		}
+	}()
 
 	repo := &UserRepository{DB: db}
 
