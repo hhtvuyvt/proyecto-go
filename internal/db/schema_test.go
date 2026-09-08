@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func TestCreateSchema(
@@ -81,6 +81,27 @@ func TestCreateSchema(
 
 		t.Fatal(
 			"no existe la tabla users",
+		)
+
+	}
+
+	// =========================
+	// Verificar tabla chapters
+	// =========================
+
+	err =
+		database.QueryRow(
+
+			`SELECT name
+			 FROM sqlite_master
+			 WHERE type='table'
+			 AND name='chapters'`,
+		).Scan(&name)
+
+	if err != nil {
+
+		t.Fatal(
+			"no existe la tabla chapters",
 		)
 
 	}

@@ -21,6 +21,16 @@ func CreateSchema(db *sql.DB) error {
 	);
 
 	CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+	CREATE TABLE IF NOT EXISTS chapters (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		book_id INTEGER NOT NULL,
+		chapter_number INTEGER NOT NULL,
+		title TEXT NOT NULL,
+		content TEXT NOT NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+	);
 	`
 
 	if _, err := db.Exec(schema); err != nil {
