@@ -36,10 +36,11 @@ jobs:
       - name: Run linter (Go)
         uses: golangci/golangci-lint-action@v8
 
+      - name: Install Gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
       - name: Run Gosec Security Scanner
-        uses: securego/gosec@v2.20.0
-        with:
-          args: ./...
+        run: gosec ./...
 
       - name: Run Govulncheck (Dependency Scanner)
         uses: golang/govulncheck-action@v1
