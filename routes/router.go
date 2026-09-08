@@ -8,129 +8,49 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-// RouterConfig agrupa las dependencias
-// necesarias para construir el router.
+// RouterConfig agrupa las dependencias necesarias para construir el router.
 type RouterConfig struct {
 	BookRepo models.BookRepositoryInterface
-
 	UserRepo models.UserRepositoryInterface
-
-	JWTKey []byte
+	JWTKey   []byte
 }
 
-// Router configura todas las rutas HTTP.
-func Router(
-	cfg RouterConfig,
-) http.Handler {
+// Router configura todas las rutas HTTP de la aplicación.
+func Router(cfg RouterConfig) http.Handler {
+	mux := http.NewServeMux()
 
-	mux :=
-		http.NewServeMux()
-
-	bookHandler :=
-		handlers.BookHandler{
-			Repo: cfg.BookRepo,
-		}
-
-	authHandler :=
-		handlers.AuthHandler{
-
-			UserRepo: cfg.UserRepo,
-
-			JWTKey: cfg.JWTKey,
-		}
+	bookHandler := handlers.BookHandler{Repo: cfg.BookRepo}
+	authHandler := handlers.AuthHandler{
+		UserRepo: cfg.UserRepo,
+		JWTKey:   cfg.JWTKey,
+	}
 
 	// =====================
-	// Públicas
+	// Rutas Públicas
 	// =====================
-
-	mux.HandleFunc(
-		"/api/books",
-		bookHandler.Books,
-	)
-
-	mux.HandleFunc(
-		"/api/login",
-		authHandler.LoginHandler,
-	)
-
-	mux.HandleFunc(
-		"/api/logout",
-		authHandler.LogoutHandler,
-	)
+	mux.HandleFunc("/api/books", bookHandler.Books)
+	mux.HandleFunc("/api/login", authHandler.LoginHandler)
+	mux.HandleFunc("/api/logout", authHandler.LogoutHandler)
 
 	// =====================
-	// Protegidas
+	// Rutas Protegidas
 	// =====================
-
-	mux.Handle(
-		"/api/books/",
-		middlewares.AuthMiddleware(
-			cfg.JWTKey,
-			http.HandlerFunc(
-				bookHandler.Book,
-			),
-		),
-	)
-
-	mux.Handle(
-		"/api/upload",
-		middlewares.AuthMiddleware(
-			cfg.JWTKey,
-			http.HandlerFunc(
-				handlers.UploadImage,
-			),
-		),
-	)
+	mux.Handle("/api/books/", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(bookHandler.Book)))
+	mux.Handle("/api/upload", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(handlers.UploadImage)))
 
 	// =====================
-	// Archivos estáticos
+	// Archivos Estáticos e Imágenes
 	// =====================
-
-	staticFiles :=
-		http.FileServer(
-			http.Dir("./static"),
-		)
-
-	mux.Handle(
-		"/static/",
-		http.StripPrefix(
-			"/static/",
-			staticFiles,
-		),
-	)
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	// =====================
-	// Imágenes subidas
+	// Redirección Raíz
 	// =====================
+	mux.Handle("/", http.RedirectHandler("/static/index.html", http.StatusTemporaryRedirect))
 
-	uploads :=
-		http.FileServer(
-			http.Dir("./uploads"),
-		)
-
-	mux.Handle(
-		"/uploads/",
-		http.StripPrefix(
-			"/uploads/",
-			uploads,
-		),
-	)
-
-	// =====================
-	// Redirección raíz
-	// =====================
-
-	mux.Handle(
-		"/",
-		http.RedirectHandler(
-			"/static/index.html",
-			http.StatusTemporaryRedirect,
-		),
-	)
-
+	// Aplicar Middlewares globales
 	return middlewares.RecoverMiddleware(
-		middlewares.LoggerMiddleware(
-			mux,
-		),
+		middlewares.LoggerMiddleware(mux),
 	)
 }
