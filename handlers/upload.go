@@ -15,7 +15,7 @@ type UploadResponse struct {
 
 // UploadImage recibe una imagen, la guarda en uploads/ y devuelve su ubicación.
 func UploadImage(w http.ResponseWriter, r *http.Request) {
-	if err := os.MkdirAll("uploads", 0755); err != nil {
+	if err := os.MkdirAll("uploads", 0750); err != nil {
 		http.Error(w, "error creando carpeta", http.StatusInternalServerError)
 		return
 	}
@@ -29,7 +29,8 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 		_ = file.Close()
 	}()
 
-	dstPath := filepath.Join("uploads", header.Filename)
+	safeFilename := filepath.Base(header.Filename)
+	dstPath := filepath.Join("uploads", safeFilename)
 	dst, err := os.Create(dstPath)
 	if err != nil {
 		http.Error(w, "error creando archivo", http.StatusInternalServerError)
@@ -45,7 +46,7 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := UploadResponse{
-		Path: "/uploads/" + header.Filename,
+		Path: "/uploads/" + safeFilename,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 
@@ -157,15 +158,18 @@ func main() {
 			},
 		)
 
-	log.Printf(
-		"servidor iniciado en http://localhost:%s",
-		port,
-	)
+	log.Println("servidor iniciado en puerto " + port)
+
+	server := &http.Server{
+		Addr:              ":" + port,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 
 	log.Fatal(
-		http.ListenAndServe(
-			":"+port,
-			router,
-		),
+		server.ListenAndServe(),
 	)
 }
