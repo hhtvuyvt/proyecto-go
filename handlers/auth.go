@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -60,7 +59,6 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isSecure := os.Getenv("E2E") != "true" && os.Getenv("DISABLE_SECURE_COOKIE") != "true"
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
@@ -68,7 +66,7 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
-		Secure:   isSecure,
+		Secure:   true,
 		MaxAge:   60 * 60 * 24,
 	})
 
@@ -77,15 +75,13 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 // LogoutHandler elimina la sesión del usuario borrando la cookie.
 func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, _ *http.Request) {
-	isSecure := os.Getenv("E2E") != "true" && os.Getenv("DISABLE_SECURE_COOKIE") != "true"
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
-		Secure:   isSecure,
+		Secure:   true,
 		MaxAge:   -1,
 	})
 

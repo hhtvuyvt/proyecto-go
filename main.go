@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -158,7 +159,8 @@ func main() {
 			},
 		)
 
-	log.Println("servidor iniciado en puerto " + port)
+	safePort := strings.NewReplacer("\n", "", "\r", "").Replace(port)
+	log.Println("servidor iniciado en puerto " + safePort)
 
 	server := &http.Server{
 		Addr:              ":" + port,

@@ -3,8 +3,15 @@ package middlewares
 import (
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
+
+// sanitizeLog sanitizes user input to prevent log injection (CWE-117).
+func sanitizeLog(str string) string {
+	replacer := strings.NewReplacer("\n", "", "\r", "")
+	return replacer.Replace(str)
+}
 
 func LoggerMiddleware(
 	next http.Handler,
@@ -16,13 +23,14 @@ func LoggerMiddleware(
 			r *http.Request,
 		) {
 
-			start :=
-				time.Now()
+			start := time.Now()
+			safePath := sanitizeLog(r.URL.Path)
+			safeMethod := sanitizeLog(r.Method)
 
 			log.Printf(
 				"⏳ %s %s",
-				r.Method,
-				r.URL.Path,
+				safeMethod,
+				safePath,
 			)
 
 			next.ServeHTTP(
@@ -32,8 +40,8 @@ func LoggerMiddleware(
 
 			log.Printf(
 				"✅ %s %s (%s)",
-				r.Method,
-				r.URL.Path,
+				safeMethod,
+				safePath,
 				time.Since(start),
 			)
 		},
