@@ -13,7 +13,7 @@ test.describe("Upload", () => {
     await expect(page.locator("#image")).toBeVisible();
 
     // Simula la selección de un archivo local en el input
-    await page.setInputFiles("#image", "path/to/test-image.png");
+    await page.fill("#image", "path/to/test-image.png");
 
     // Opcional: validar que el nombre del archivo aparezca o se previsualice
     const inputValue = await page.locator("#image").inputValue();

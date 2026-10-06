@@ -23,7 +23,7 @@ func createTestDB(
 
 	database, err :=
 		sql.Open(
-			"sqlite3",
+			"sqlite",
 			":memory:",
 		)
 
