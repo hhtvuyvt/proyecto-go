@@ -12,6 +12,7 @@ test.describe("Upload", () => {
   test("permite seleccionar y subir una imagen de libro", async ({ page }) => {
     await expect(page.locator("#image")).toBeVisible();
 
+<<<<<<< HEAD
     // Sube una imagen al endpoint existente de upload con la sesión autenticada
     const response = await page.request.post("/api/upload", {
       multipart: {
@@ -22,6 +23,10 @@ test.describe("Upload", () => {
         },
       },
     });
+=======
+    // Simula la selección de un archivo local en el input
+    await page.fill("#image", "path/to/test-image.png");
+>>>>>>> ff572c17a8505179bb124b4cee455c5fcf55861c
 
     expect(response.ok()).toBeTruthy();
     const data = await response.json();

@@ -27,7 +27,7 @@ func LoggerMiddleware(
 			safePath := sanitizeLog(r.URL.Path)
 			safeMethod := sanitizeLog(r.Method)
 
-			log.Printf(
+			log.Printf( // #nosec G706
 				"⏳ %s %s",
 				safeMethod,
 				safePath,
@@ -38,7 +38,7 @@ func LoggerMiddleware(
 				r,
 			)
 
-			log.Printf(
+			log.Printf( // #nosec G706
 				"✅ %s %s (%s)",
 				safeMethod,
 				safePath,
