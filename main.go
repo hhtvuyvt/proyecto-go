@@ -160,7 +160,7 @@ func main() {
 		)
 
 	safePort := strings.NewReplacer("\n", "", "\r", "").Replace(port)
-	log.Println("servidor iniciado en puerto " + safePort)
+	log.Println("servidor iniciado en puerto " + safePort) // #nosec G706
 
 	server := &http.Server{
 		Addr:              ":" + port,

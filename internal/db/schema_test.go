@@ -13,7 +13,7 @@ func TestCreateSchema(
 
 	database, err :=
 		sql.Open(
-			"sqlite3",
+			"sqlite",
 			":memory:",
 		)
 
@@ -135,7 +135,7 @@ func TestCreateSchemaTwice(
 
 	database, err :=
 		sql.Open(
-			"sqlite3",
+			"sqlite",
 			":memory:",
 		)
 

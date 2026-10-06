@@ -65,9 +65,8 @@ func (r *UserRepository) GetByID(id int64) (User, error) {
 // Create inserta un nuevo usuario en la base de datos y le asigna el ID generado.
 func (r *UserRepository) Create(user *User) error {
 	result, err := r.DB.Exec(`
-		SELECT id, username, password_hash, created_at
-		FROM users
-		WHERE id = ?
+		INSERT INTO users (username, password_hash)
+		VALUES (?, ?)
 	`, user.Username, user.PasswordHash)
 	if err != nil {
 		return err
