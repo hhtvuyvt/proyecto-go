@@ -12,10 +12,25 @@ test.describe("Upload", () => {
   test("permite seleccionar y subir una imagen de libro", async ({ page }) => {
     await expect(page.locator("#image")).toBeVisible();
 
-    // Simula la selección de un archivo local en el input
-    await page.setInputFiles("#image", "path/to/test-image.png");
+    // Sube una imagen al endpoint existente de upload con la sesión autenticada
+    const response = await page.request.post("/api/upload", {
+      multipart: {
+        image: {
+          name: "test-image.png",
+          mimeType: "image/png",
+          buffer: Buffer.from("fake-image-bytes"),
+        },
+      },
+    });
 
-    // Opcional: validar que el nombre del archivo aparezca o se previsualice
+    expect(response.ok()).toBeTruthy();
+    const data = await response.json();
+    expect(data.path).toContain("test-image.png");
+
+    // Asigna la ruta de la imagen subida al input del formulario
+    await page.fill("#image", data.path);
+
+    // Validar que el nombre del archivo aparezca en el input
     const inputValue = await page.locator("#image").inputValue();
     expect(inputValue).toContain("test-image.png");
   });

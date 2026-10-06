@@ -141,6 +141,10 @@ func main() {
 		DB: sqlDB,
 	}
 
+	chapterRepo := &db.SQLiteChapterRepository{
+		DB: sqlDB,
+	}
+
 	// ==========================
 	// Router
 	// ==========================
@@ -148,11 +152,9 @@ func main() {
 	router :=
 		routes.Router(
 			routes.RouterConfig{
-
-				BookRepo: bookRepo,
-
-				UserRepo: userRepo,
-
+				BookRepo:    bookRepo,
+				UserRepo:    userRepo,
+				ChapterRepo: chapterRepo,
 				JWTKey: []byte(
 					jwtSecret,
 				),

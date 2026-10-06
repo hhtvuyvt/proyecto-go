@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lector de Libros</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary shadow-sm">
+      <div class="container">
+        <a href="/static/index.html" class="navbar-brand text-decoration-none">
+          📚 Volver al Catálogo
+        </a>
+        <div id="userPanel" class="d-none">
+          <span id="usernameLabel" class="text-white me-3 small">admin</span>
+          <button id="logoutButton" class="btn btn-outline-light btn-sm">
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container my-4">
+      <!-- Título principal del libro -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <h1 id="bookTitleHeader" class="display-6 fw-bold text-dark">
+            Cargando...
+          </h1>
+          <p id="bookAuthorHeader" class="text-muted mb-0">
+            Cargando información del libro...
+          </p>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Barra lateral: Índice y Formulario de nuevo capítulo -->
+        <div class="col-md-4 mb-4">
+          <div class="card shadow-sm mb-3 border-0">
+            <div class="card-body">
+              <h5 class="card-title mb-3 fw-bold">Índice de Capítulos</h5>
+              <div id="chapterList" class="list-group list-group-flush">
+                <p class="text-muted small mb-0">Cargando capítulos...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulario de nuevo capítulo (Visible solo para administradores) -->
+          <div id="chapterFormCard" class="card shadow-sm border-0 d-none">
+            <div class="card-body bg-white rounded">
+              <h5 class="card-title mb-3 fw-bold text-success">
+                ➕ Agregar Capítulo
+              </h5>
+              <form id="chapterForm">
+                <div class="mb-2">
+                  <label
+                    for="chapterNumber"
+                    class="form-label small fw-semibold"
+                    >Número de Capítulo</label
+                  >
+                  <input
+                    type="number"
+                    id="chapterNumber"
+                    class="form-control form-control-sm"
+                    required
+                  />
+                </div>
+                <div class="mb-2">
+                  <label
+                    for="chapterTitleInput"
+                    class="form-label small fw-semibold"
+                    >Título del Capítulo</label
+                  >
+                  <input
+                    type="text"
+                    id="chapterTitleInput"
+                    class="form-control form-control-sm"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label
+                    for="chapterContentInput"
+                    class="form-label small fw-semibold"
+                    >Contenido</label
+                  >
+                  <textarea
+                    id="chapterContentInput"
+                    class="form-control form-control-sm"
+                    rows="5"
+                    required
+                  ></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-sm w-100">
+                  Guardar Capítulo
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel de lectura principal -->
+        <div class="col-md-8">
+          <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+              <h3 id="chapterTitle" class="mb-3 text-primary fw-bold">
+                Selecciona un capítulo
+              </h3>
+              <hr class="mb-4" />
+              <div
+                id="chapterContent"
+                class="fs-5 text-secondary"
+                style="white-space: pre-line; line-height: 1.8"
+              >
+                El contenido del capítulo aparecerá aquí...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookID = urlParams.get("book_id");
+        let chapterID = urlParams.get("id") || urlParams.get("chapter_id");
+
+        if (!bookID) {
+          document.getElementById("bookTitleHeader").innerText = "Error";
+          document.getElementById("chapterContent").innerText =
+            "No se especificó un libro válido en la URL.";
+          return;
+        }
+
+        // Comprobar sesión y mostrar el formulario de capítulos si el usuario está autenticado
+        try {
+          const meRes = await fetch("/api/me", { credentials: "same-origin" });
+          if (meRes.ok) {
+            document
+              .getElementById("chapterFormCard")
+              .classList.remove("d-none");
+          }
+        } catch (e) {
+          // Usuario no autenticado o error de red
+        }
+
+        // Cargar información del libro actual
+        try {
+          const bookRes = await fetch(`/api/books/${bookID}`);
+          if (bookRes.ok) {
+            const book = await bookRes.json();
+            document.getElementById("bookTitleHeader").innerText = book.title;
+            document.getElementById("bookAuthorHeader").innerText =
+              `Autor: ${book.author} ${book.isbn ? "• ISBN: " + book.isbn : ""}`;
+          }
+        } catch (e) {
+          console.error("No se pudo cargar la info del libro", e);
+        }
+
+        // Cargar capítulos del libro y renderizar índice
+        async function loadChapters() {
+          try {
+            const res = await fetch(`/api/books/${bookID}/chapters`);
+            if (!res.ok) throw new Error("Error al obtener capítulos");
+            const chapters = await res.json();
+
+            const chapterListEl = document.getElementById("chapterList");
+            chapterListEl.innerHTML = "";
+
+            if (!chapters || chapters.length === 0) {
+              chapterListEl.innerHTML =
+                "<p class='text-muted small mb-0'>Aún no hay capítulos registrados.</p>";
+              return [];
+            }
+
+            // Si no hay un capítulo seleccionado en la URL, seleccionamos el primero por defecto
+            if (!chapterID && chapters.length > 0) {
+              chapterID = chapters[0].id;
+            }
+
+            chapters.forEach((ch) => {
+              const a = document.createElement("a");
+              a.href = `?book_id=${bookID}&id=${ch.id}`;
+              a.className = `list-group-item list-group-item-action ${ch.id == chapterID ? "active" : ""}`;
+              a.innerText = `Cap. ${ch.chapter_number}: ${ch.title}`;
+              chapterListEl.appendChild(a);
+            });
+
+            return chapters;
+          } catch (err) {
+            console.error(err);
+            return [];
+          }
+        }
+
+        const chapters = await loadChapters();
+
+        // Cargar contenido del capítulo seleccionado si existe
+        if (chapterID && chapters.length > 0) {
+          try {
+            const chapterRes = await fetch(
+              `/api/books/${bookID}/chapters/${chapterID}`,
+            );
+            if (chapterRes.ok) {
+              const chapter = await chapterRes.json();
+              document.getElementById("chapterTitle").innerText =
+                `Capítulo ${chapter.chapter_number}: ${chapter.title}`;
+              document.getElementById("chapterContent").innerText =
+                chapter.content;
+            }
+          } catch (err) {
+            console.error("Error al cargar el capítulo", err);
+          }
+        }
+
+        // Manejar envío del formulario para crear un nuevo capítulo
+        const chapterForm = document.getElementById("chapterForm");
+        chapterForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const payload = {
+            chapter_number: parseInt(
+              document.getElementById("chapterNumber").value,
+            ),
+            title: document.getElementById("chapterTitleInput").value.trim(),
+            content: document
+              .getElementById("chapterContentInput")
+              .value.trim(),
+          };
+
+          try {
+            const response = await fetch(`/api/books/${bookID}/chapters`, {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert(
+                "No fue posible crear el capítulo. Verifica los datos o tu sesión.",
+              );
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Error de conexión al guardar el capítulo.");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

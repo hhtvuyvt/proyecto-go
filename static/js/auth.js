@@ -10,281 +10,194 @@
 // Elementos del DOM
 // =============================
 
-const loginPanel =
-    document.getElementById(
-        "loginPanel",
-    );
+let loginPanel;
+let appPanel;
+let userPanel;
+let loginForm;
+let usernameInput;
+let passwordInput;
+let loginError;
+let usernameLabel;
+let logoutButton;
 
-const appPanel =
-    document.getElementById(
-        "appPanel",
-    );
-
-const userPanel =
-    document.getElementById(
-        "userPanel",
-    );
-
-const loginForm =
-    document.getElementById(
-        "loginForm",
-    );
-
-const usernameInput =
-    document.getElementById(
-        "loginUsername",
-    );
-
-const passwordInput =
-    document.getElementById(
-        "loginPassword",
-    );
-
-const loginError =
-    document.getElementById(
-        "loginError",
-    );
-
-const usernameLabel =
-    document.getElementById(
-        "usernameLabel",
-    );
-
-const logoutButton =
-    document.getElementById(
-        "logoutButton",
-    );
+// Inicializar referencias al DOM cuando esté listo
+function initDOMElements() {
+  loginPanel = document.getElementById("loginPanel");
+  appPanel = document.getElementById("appPanel");
+  userPanel = document.getElementById("userPanel");
+  loginForm = document.getElementById("loginForm");
+  usernameInput = document.getElementById("loginUsername");
+  passwordInput = document.getElementById("loginPassword");
+  loginError = document.getElementById("loginError");
+  usernameLabel = document.getElementById("usernameLabel");
+  logoutButton = document.getElementById("logoutButton");
+}
 
 // =============================
 // Interfaz
 // =============================
 
 function showLogin() {
+  if (loginPanel) loginPanel.classList.remove("d-none");
+  if (appPanel) appPanel.classList.add("d-none");
+  if (userPanel) userPanel.classList.add("d-none");
 
-    loginPanel.classList.remove(
-        "d-none",
-    );
+  clearLoginError();
 
-    appPanel.classList.add(
-        "d-none",
-    );
-
-    userPanel.classList.add(
-        "d-none",
-    );
-
-    clearLoginError();
-
-    passwordInput.value = "";
-
-    usernameInput.focus();
-
+  if (passwordInput) passwordInput.value = "";
+  if (usernameInput) usernameInput.focus();
 }
 
 function showApplication() {
-
-    loginPanel.classList.add(
-        "d-none",
-    );
-
-    appPanel.classList.remove(
-        "d-none",
-    );
-
-    userPanel.classList.remove(
-        "d-none",
-    );
-
+  if (loginPanel) loginPanel.classList.add("d-none");
+  if (appPanel) appPanel.classList.remove("d-none");
+  if (userPanel) userPanel.classList.remove("d-none");
 }
 
-function showLoginError(
-    message,
-) {
+function showLoginError(message) {
+  if (!loginError) return;
+  loginError.textContent = message;
 
-    loginError.textContent =
-        message;
-
-    loginError.classList.remove(
-        "d-none",
-    );
-
+  loginError.classList.remove("d-none");
 }
 
 function clearLoginError() {
+  if (!loginError) return;
+  loginError.textContent = "";
 
-    loginError.textContent = "";
-
-    loginError.classList.add(
-        "d-none",
-    );
-
+  loginError.classList.add("d-none");
 }
 
 // =============================
 // API
 // =============================
 
-async function login(
-    username,
-    password,
-) {
+async function login(username, password) {
+  clearLoginError();
 
-    clearLoginError();
+  const response = await fetch("/api/login", {
+    method: "POST",
 
-    const response =
-        await fetch(
-            "/api/login",
-            {
+    credentials: "same-origin",
 
-                method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
 
-                credentials:
-                    "same-origin",
+    body: JSON.stringify({
+      username,
 
-                headers: {
-                    "Content-Type":
-                        "application/json",
-                },
+      password,
+    }),
+  });
 
-                body:
-                    JSON.stringify({
+  if (!response.ok) {
+    showLoginError("Usuario o contraseña incorrectos.");
 
-                        username,
+    return false;
+  }
 
-                        password,
+  if (usernameLabel) {
+    usernameLabel.textContent = username;
+  }
 
-                    }),
-
-            },
-        );
-
-    if (!response.ok) {
-
-        showLoginError(
-            "Usuario o contraseña incorrectos.",
-        );
-
-        return false;
-
-    }
-
-    usernameLabel.textContent =
-        username;
-
-    return true;
-
+  return true;
 }
 
 async function logout() {
+  await fetch("/api/logout", {
+    method: "POST",
 
-    await fetch(
-        "/api/logout",
-        {
+    credentials: "same-origin",
+  });
 
-            method: "POST",
-
-            credentials:
-                "same-origin",
-
-        },
-    );
-
+  if (typeof showLogin === "function" && loginPanel) {
     showLogin();
-
+  } else {
+    window.location.href = "/static/index.html";
+  }
 }
 
 async function checkSession() {
+  try {
+    const response = await fetch("/api/me", {
+      credentials: "same-origin",
+    });
 
-    try {
-
-        const response =
-            await fetch(
-                "/api/me",
-                {
-
-                    credentials:
-                        "same-origin",
-
-                },
-            );
-
-        if (!response.ok) {
-
-            return false;
-
-        }
-
-        const user =
-            await response.json();
-
-        usernameLabel.textContent =
-            user.username;
-
-        return true;
-
-    } catch {
-
-        return false;
-
+    if (!response.ok) {
+      return false;
     }
 
+    const user = await response.json();
+
+    if (usernameLabel) {
+      usernameLabel.textContent = user.username;
+    }
+
+    if (userPanel) {
+      userPanel.classList.remove("d-none");
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // =============================
-// Eventos
+// Eventos (Protegidos por condición)
 // =============================
 
-loginForm.addEventListener(
+function attachEventListeners() {
+  if (loginForm) {
+    loginForm.addEventListener(
+      "submit",
 
-    "submit",
-
-    async function (
-        event,
-    ) {
-
+      async function (event) {
         event.preventDefault();
 
-        const username =
-            usernameInput.value.trim();
+        const username = usernameInput.value.trim();
 
-        const password =
-            passwordInput.value;
+        const password = passwordInput.value;
 
-        const ok =
-            await login(
-                username,
-                password,
-            );
+        const ok = await login(username, password);
 
         if (!ok) {
-
-            return;
-
+          return;
         }
 
         showApplication();
 
-        if (
-            typeof loadBooks ===
-            "function"
-        ) {
-
-            await loadBooks();
-
+        if (typeof loadBooks === "function") {
+          await loadBooks();
         }
+      },
+    );
+  }
 
-    },
+  if (logoutButton) {
+    logoutButton.addEventListener(
+      "click",
 
-);
-
-logoutButton.addEventListener(
-
-    "click",
-
-    async function () {
-
+      async function () {
         await logout();
+      },
+    );
+  }
+}
 
-    },
+// Comprobar la sesión automáticamente al cargar cualquier página
+document.addEventListener("DOMContentLoaded", async () => {
+  initDOMElements();
+  attachEventListeners();
 
-);
+  const isLogged = await checkSession();
+  if (isLogged && typeof showApplication === "function" && loginPanel) {
+    showApplication();
+    if (typeof loadBooks === "function") {
+      await loadBooks();
+    }
+  } else if (!isLogged && loginPanel) {
+    showLogin();
+  }
+});

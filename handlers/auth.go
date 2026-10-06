@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/hhtvuyvt/proyecto-go/middlewares"
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
@@ -87,5 +88,37 @@ func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, _ *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(map[string]bool{"success": true}); err != nil {
 		http.Error(w, "error generando respuesta", http.StatusInternalServerError)
+	}
+}
+
+// MeHandler devuelve la información del usuario autenticado actual a partir del contexto.
+func (h *AuthHandler) MeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "método no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	claims, ok := middlewares.GetClaims(r)
+	if !ok {
+		http.Error(w, "no autorizado", http.StatusUnauthorized)
+		return
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok || username == "" {
+		http.Error(w, "no autorizado", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.UserRepo.GetByUsername(username)
+	if err != nil {
+		http.Error(w, "usuario no encontrado", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		http.Error(w, "error generando respuesta", http.StatusInternalServerError)
+		return
 	}
 }

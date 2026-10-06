@@ -150,6 +150,10 @@ func TestAuthMiddlewareWithValidCookie(t *testing.T) {
 					w http.ResponseWriter,
 					r *http.Request,
 				) {
+					claims, ok := GetClaims(r)
+					if !ok || claims["sub"] != "test-user" {
+						t.Errorf("claims no encontrados en contexto: %v", claims)
+					}
 
 					w.WriteHeader(
 						http.StatusOK,

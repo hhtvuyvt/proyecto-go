@@ -1,11 +1,25 @@
 package middlewares
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type contextKey string
+
+const (
+	// ClaimsKey es la clave utilizada para almacenar los claims de JWT en el contexto.
+	ClaimsKey contextKey = "claims"
+)
+
+// GetClaims extrae los claims del JWT almacenados en el contexto de la petición.
+func GetClaims(r *http.Request) (jwt.MapClaims, bool) {
+	claims, ok := r.Context().Value(ClaimsKey).(jwt.MapClaims)
+	return claims, ok
+}
 
 // AuthMiddleware válida tokens JWT que viajan en cookies.
 //
@@ -75,6 +89,11 @@ func AuthMiddleware(
 				)
 
 				return
+			}
+
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				ctx := context.WithValue(r.Context(), ClaimsKey, claims)
+				r = r.WithContext(ctx)
 			}
 
 			next.ServeHTTP(

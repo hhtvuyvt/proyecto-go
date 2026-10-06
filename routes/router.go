@@ -10,9 +10,10 @@ import (
 
 // RouterConfig agrupa las dependencias necesarias para construir el router.
 type RouterConfig struct {
-	BookRepo models.BookRepositoryInterface
-	UserRepo models.UserRepositoryInterface
-	JWTKey   []byte
+	BookRepo    models.BookRepositoryInterface
+	UserRepo    models.UserRepositoryInterface
+	ChapterRepo models.ChapterRepositoryInterface
+	JWTKey      []byte
 }
 
 // Router configura todas las rutas HTTP de la aplicación.
@@ -24,17 +25,25 @@ func Router(cfg RouterConfig) http.Handler {
 		UserRepo: cfg.UserRepo,
 		JWTKey:   cfg.JWTKey,
 	}
+	chapterHandler := handlers.ChapterHandler{ChapterRepo: cfg.ChapterRepo} // <-- Instanciado con el repo inyectado
 
 	// =====================
 	// Rutas Públicas
 	// =====================
-	mux.HandleFunc("/api/books", bookHandler.Books)
+	mux.HandleFunc("GET /api/books", bookHandler.Books)
 	mux.HandleFunc("/api/login", authHandler.LoginHandler)
 	mux.HandleFunc("/api/logout", authHandler.LogoutHandler)
+
+	// Ruta pública para leer capítulos
+	mux.HandleFunc("GET /api/books/{book_id}/chapters/{id}", chapterHandler.GetChapterHandler)
+	mux.HandleFunc("GET /api/books/{book_id}/chapters", chapterHandler.ListChaptersHandler)
 
 	// =====================
 	// Rutas Protegidas
 	// =====================
+	mux.Handle("GET /api/me", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(authHandler.MeHandler)))
+	mux.Handle("POST /api/books", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(bookHandler.Books)))
+	mux.Handle("POST /api/books/{book_id}/chapters", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(chapterHandler.CreateChapterHandler)))
 	mux.Handle("/api/books/", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(bookHandler.Book)))
 	mux.Handle("/api/upload", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(handlers.UploadImage)))
 

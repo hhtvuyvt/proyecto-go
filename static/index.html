@@ -1,314 +1,193 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tienda de Libros</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
 
-<head>
+  <body>
+    <nav class="navbar navbar-dark bg-primary">
+      <div class="container">
+        <span class="navbar-brand"> 📚 Tienda de Libros </span>
 
-  <meta charset="UTF-8">
+        <div id="userPanel" class="d-none">
+          <span id="usernameLabel" class="text-white me-3"> admin </span>
 
-  <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1">
-
-  <title>Tienda de Libros</title>
-
-  <link
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-
-</head>
-
-<body>
-
-<nav class="navbar navbar-dark bg-primary">
-
-  <div class="container">
-
-        <span class="navbar-brand">
-            📚 Tienda de Libros
-        </span>
-
-    <div
-            id="userPanel"
-            class="d-none">
-
-            <span
-                    id="usernameLabel"
-                    class="text-white me-3">
-
-                admin
-
-            </span>
-
-      <button
-              id="logoutButton"
-              class="btn btn-outline-light btn-sm">
-
-        Cerrar sesión
-
-      </button>
-
-    </div>
-
-  </div>
-
-</nav>
-
-<div class="container my-4">
-
-  <!-- ============================= -->
-  <!-- LOGIN                         -->
-  <!-- ============================= -->
-
-  <div
-          id="loginPanel"
-          class="row justify-content-center">
-
-    <div class="col-md-5">
-
-      <div class="card shadow">
-
-        <div class="card-body">
-
-          <h3 class="mb-4 text-center">
-
-            Iniciar sesión
-
-          </h3>
-
-          <form id="loginForm">
-
-            <div class="mb-3">
-
-              <label
-                      for="loginUsername"
-                      class="form-label">
-
-                Usuario
-
-              </label>
-
-              <input
-
-                      id="loginUsername"
-
-                      class="form-control"
-
-                      type="text"
-
-                      autocomplete="username"
-
-                      required>
-
-            </div>
-
-            <div class="mb-3">
-
-              <label
-                      for="loginPassword"
-                      class="form-label">
-
-                Contraseña
-
-              </label>
-
-              <input
-
-                      id="loginPassword"
-
-                      class="form-control"
-
-                      type="password"
-
-                      autocomplete="current-password"
-
-                      required>
-
-            </div>
-
-            <div
-                    id="loginError"
-                    class="alert alert-danger d-none">
-
-            </div>
-
-            <button
-
-                    type="submit"
-
-                    class="btn btn-primary w-100">
-
-              Entrar
-
-            </button>
-
-          </form>
-
+          <button id="logoutButton" class="btn btn-outline-light btn-sm">
+            Cerrar sesión
+          </button>
         </div>
+      </div>
+    </nav>
 
+    <div class="container my-4">
+      <!-- ============================= -->
+      <!-- LOGIN                         -->
+      <!-- ============================= -->
+
+      <div id="loginPanel" class="row justify-content-center">
+        <div class="col-md-5">
+          <div class="card shadow">
+            <div class="card-body">
+              <h3 class="mb-4 text-center">Iniciar sesión</h3>
+
+              <form id="loginForm">
+                <div class="mb-3">
+                  <label for="loginUsername" class="form-label">
+                    Usuario
+                  </label>
+
+                  <input
+                    id="loginUsername"
+                    class="form-control"
+                    type="text"
+                    autocomplete="username"
+                    required
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <label for="loginPassword" class="form-label">
+                    Contraseña
+                  </label>
+
+                  <input
+                    id="loginPassword"
+                    class="form-control"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                  />
+                </div>
+
+                <div id="loginError" class="alert alert-danger d-none"></div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                  Entrar
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <!-- ============================= -->
+      <!-- APLICACIÓN                    -->
+      <!-- ============================= -->
+
+      <div id="appPanel" class="d-none">
+        <h2 class="mb-3">Agregar / Editar Libro</h2>
+
+        <form id="book-form" class="row g-3">
+          <div class="col-md-6">
+            <label for="title" class="form-label"> Título </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label for="author" class="form-label"> Autor </label>
+
+            <input
+              type="text"
+              id="author"
+              name="author"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="col-md-4">
+            <label for="ISBN" class="form-label"> ISBN </label>
+            <input type="text" id="ISBN" name="ISBN" class="form-control" />
+          </div>
+
+          <div class="col-md-8">
+            <label for="image" class="form-label"> Portada </label>
+
+            <input
+              type="text"
+              id="image"
+              name="image"
+              class="form-control"
+              placeholder="URL o imagen"
+            />
+          </div>
+
+          <!-- Sección opcional para el primer capítulo al crear el libro -->
+          <div class="col-12 mt-4">
+            <div class="card bg-light border-0 p-3">
+              <h5 class="card-title fs-6 text-primary fw-bold mb-3">
+                📖 Primer Capítulo (Opcional al crear)
+              </h5>
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label for="initialChapterNumber" class="form-label small"
+                    >N° Capítulo</label
+                  >
+                  <input
+                    type="number"
+                    id="initialChapterNumber"
+                    name="initialChapterNumber"
+                    class="form-control form-control-sm"
+                    value="1"
+                  />
+                </div>
+                <div class="col-md-9">
+                  <label for="initialChapterTitle" class="form-label small"
+                    >Título del Capítulo</label
+                  >
+                  <input
+                    type="text"
+                    id="initialChapterTitle"
+                    name="initialChapterTitle"
+                    class="form-control form-control-sm"
+                    placeholder="Ej. Introducción"
+                  />
+                </div>
+                <div class="col-12 mt-2">
+                  <label for="initialChapterContent" class="form-label small"
+                    >Contenido inicial</label
+                  >
+                  <textarea
+                    id="initialChapterContent"
+                    name="initialChapterContent"
+                    class="form-control form-control-sm"
+                    rows="3"
+                    placeholder="Escribe el contenido..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <button id="saveButton" type="submit" class="btn btn-success">
+              Agregar
+            </button>
+          </div>
+        </form>
+
+        <hr class="my-4" />
+
+        <h2>Catálogo</h2>
+
+        <div id="book-list" class="row g-4"></div>
+      </div>
     </div>
 
-  </div>
-
-  <!-- ============================= -->
-  <!-- APLICACIÓN                    -->
-  <!-- ============================= -->
-
-  <div
-          id="appPanel"
-          class="d-none">
-
-    <h2 class="mb-3">
-
-      Agregar / Editar Libro
-
-    </h2>
-
-    <form
-
-            id="book-form"
-
-            class="row g-3">
-
-      <div class="col-md-6">
-
-        <label
-                for="title"
-                class="form-label">
-
-          Título
-
-        </label>
-
-        <input
-
-                type="text"
-
-                id="title"
-
-                name="title"
-
-                class="form-control"
-
-                required>
-
-      </div>
-
-      <div class="col-md-6">
-
-        <label
-                for="author"
-                class="form-label">
-
-          Autor
-
-        </label>
-
-        <input
-
-                type="text"
-
-                id="author"
-
-                name="author"
-
-                class="form-control"
-
-                required>
-
-      </div>
-
-      <div class="col-md-4">
-
-        <label
-                for="ISBN"
-                class="form-label">
-
-          ISBN
-
-        </label>
-
-        <input
-
-                type="text"
-
-                id="ISBN"
-
-                name="ISBN"
-
-                class="form-control">
-
-      </div>
-
-      <div class="col-md-8">
-
-        <label
-                for="image"
-                class="form-label">
-
-          Portada
-
-        </label>
-
-        <input
-
-                type="text"
-
-                id="image"
-
-                name="image"
-
-                class="form-control"
-
-                placeholder="URL o imagen">
-
-      </div>
-
-      <div class="col-12">
-
-        <button
-
-                id="saveButton"
-
-                type="submit"
-
-                class="btn btn-success">
-
-          Agregar
-
-        </button>
-
-      </div>
-
-    </form>
-
-    <hr class="my-4">
-
-    <h2>
-
-      Catálogo
-
-    </h2>
-
-    <div
-
-            id="book-list"
-
-            class="row g-4">
-
-    </div>
-
-  </div>
-
-</div>
-
-<script src="/static/js/auth.js"></script>
-
-<script src="/static/js/book.js"></script>
-
-<script src="/static/js/app.js"></script>
-
-</body>
-
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/book.js"></script>
+    <script src="/static/js/app.js"></script>
+  </body>
 </html>

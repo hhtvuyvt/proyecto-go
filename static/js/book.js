@@ -10,83 +10,64 @@
 // Estado
 // ===================================
 
-const API =
-	"/api/books";
+const API = "/api/books";
 
 let books = [];
 
-let editingBookId =
-	null;
+let editingBookId = null;
 
 // ===================================
 // Referencias del DOM
 // ===================================
 
-const form =
-	document.getElementById(
-		"book-form",
-	);
+const form = document.getElementById("book-form");
 
-const titleInput =
-	document.getElementById(
-		"title",
-	);
+const titleInput = document.getElementById("title");
 
-const authorInput =
-	document.getElementById(
-		"author",
-	);
+const authorInput = document.getElementById("author");
 
-const isbnInput =
-	document.getElementById(
-		"ISBN",
-	);
+const isbnInput = document.getElementById("ISBN");
 
-const imageInput =
-	document.getElementById(
-		"image",
-	);
+const imageInput = document.getElementById("image");
 
-const saveButton =
-	document.getElementById(
-		"saveButton",
-	);
+const saveButton = document.getElementById("saveButton");
 
-const bookList =
-	document.getElementById(
-		"book-list",
-	);
+const bookList = document.getElementById("book-list");
+
+// Referencias para el primer capítulo opcional
+const initialChapterNumberInput = document.getElementById(
+  "initialChapterNumber",
+);
+
+const initialChapterTitleInput = document.getElementById("initialChapterTitle");
+
+const initialChapterContentInput = document.getElementById(
+  "initialChapterContent",
+);
 
 // ===================================
 // Utilidades
 // ===================================
 
 function resetForm() {
+  editingBookId = null;
 
-	editingBookId = null;
+  form.reset();
 
-	form.reset();
+  // Restablecer el número de capítulo por defecto si existe
+  if (initialChapterNumberInput) {
+    initialChapterNumberInput.value = "1";
+  }
 
-	saveButton.innerText =
-		"Agregar";
-
+  saveButton.innerText = "Agregar";
 }
 
 function sessionExpired() {
+  alert("La sesión ha expirado.");
 
-	alert(
-		"La sesión ha expirado.",
-	);
-
-	if (
-		typeof showLogin ===
-		"function"
-	) {
-
-		showLogin();
-
-	}
-
+  if (typeof showLogin === "function") {
+    showLogin();
+  }
 }
 
 // ===================================
@@ -94,41 +75,23 @@ function sessionExpired() {
 // ===================================
 
 async function loadBooks() {
+  try {
+    const response = await fetch(API, {
+      credentials: "same-origin",
+    });
 
-	try {
+    if (response.status === 401) {
+      sessionExpired();
 
-		const response =
-			await fetch(
-				API, {
+      return;
+    }
 
-					credentials: "same-origin",
+    books = await response.json();
 
-				},
-			);
-
-		if (
-			response.status === 401
-		) {
-
-			sessionExpired();
-
-			return;
-
-		}
-
-		books =
-			await response.json();
-
-		renderBooks();
-
-	} catch (error) {
-
-		console.error(
-			error,
-		);
-
-	}
-
+    renderBooks();
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 // ===================================
@@ -136,28 +99,16 @@ async function loadBooks() {
 // ===================================
 
 function renderBooks() {
+  bookList.innerHTML = "";
 
-	bookList.innerHTML =
-		"";
+  books.forEach(function (book) {
+    const card = document.createElement("div");
 
-	books.forEach(
+    card.className = "book col-sm-6 col-md-4 col-lg-3";
 
-		function(
-			book,
-		) {
+    card.dataset.id = book.id;
 
-			const card =
-				document.createElement(
-					"div",
-				);
-
-			card.className =
-				"book col-sm-6 col-md-4 col-lg-3";
-
-			card.dataset.id =
-				book.id;
-
-			card.innerHTML = `
+    card.innerHTML = `
 
 <div class="card h-100 shadow-sm">
 
@@ -166,7 +117,7 @@ class="card-img-top"
 src="${book.image || ""}"
 alt="${book.title}">
 
-<div class="card-body">
+<div class="card-body d-flex flex-column">
 
 <h5 class="card-title">
 
@@ -185,6 +136,16 @@ ${book.author}
 ${book.isbn}
 
 </p>
+
+<div class="mt-auto">
+
+<a
+href="/static/reader.html?book_id=${book.id}"
+class="btn btn-success btn-sm w-100 mb-2">
+
+Leer
+
+</a>
 
 <button
 class="btn btn-primary btn-sm"
@@ -206,16 +167,12 @@ Borrar
 
 </div>
 
+</div>
+
 `;
 
-			bookList.appendChild(
-				card,
-			);
-
-		},
-
-	);
-
+    bookList.appendChild(card);
+  });
 }
 
 // ===================================
@@ -225,148 +182,87 @@ Borrar
 // Gestiona los botones Editar y Borrar
 // mediante delegación de eventos.
 bookList.addEventListener(
+  "click",
 
-	"click",
+  async function (event) {
+    const button = event.target.closest("button");
 
-	async function(
-		event,
-	) {
+    if (!button) {
+      return;
+    }
 
-		const button =
-			event.target.closest(
-				"button",
-			);
+    const card = button.closest(".book");
 
-		if (!button) {
+    if (!card) {
+      return;
+    }
 
-			return;
+    const id = Number(card.dataset.id);
 
-		}
+    // ===========================
+    // Editar
+    // ===========================
 
-		const card =
-			button.closest(
-				".book",
-			);
+    if (button.dataset.action === "edit") {
+      const book = books.find(function (b) {
+        return b.id === id;
+      });
 
-		if (!card) {
+      if (!book) {
+        return;
+      }
 
-			return;
+      editingBookId = id;
 
-		}
+      titleInput.value = book.title;
 
-		const id =
-			Number(
-				card.dataset.id,
-			);
+      authorInput.value = book.author;
 
-		// ===========================
-		// Editar
-		// ===========================
+      isbnInput.value = book.isbn || "";
 
-		if (
-			button.dataset.action ===
-			"edit"
-		) {
+      imageInput.value = book.image || "";
 
-			const book =
-				books.find(
+      saveButton.innerText = "Guardar cambios";
 
-					function(b) {
+      titleInput.focus();
+    }
 
-						return b.id === id;
+    // ===========================
+    // Borrar
+    // ===========================
 
-					},
+    if (button.dataset.action === "delete") {
+      const confirmed = confirm("¿Eliminar este libro?");
 
-				);
+      if (!confirmed) {
+        return;
+      }
 
-			if (!book) {
+      const response = await fetch(
+        `${API}/${id}`,
 
-				return;
+        {
+          method: "DELETE",
 
-			}
+          credentials: "same-origin",
+        },
+      );
 
-			editingBookId =
-				id;
+      if (response.status === 401) {
+        sessionExpired();
 
-			titleInput.value =
-				book.title;
+        return;
+      }
 
-			authorInput.value =
-				book.author;
+      if (!response.ok) {
+        console.error("No fue posible eliminar el libro.");
 
-			isbnInput.value =
-				book.isbn || "";
+        return;
+      }
 
-			imageInput.value =
-				book.image || "";
-
-			saveButton.innerText =
-				"Guardar cambios";
-
-			titleInput.focus();
-
-		}
-
-		// ===========================
-		// Borrar
-		// ===========================
-
-		if (
-			button.dataset.action ===
-			"delete"
-		) {
-			const confirmed =
-				confirm(
-					"¿Eliminar este libro?",
-				);
-
-			if (!confirmed) {
-
-				return;
-
-			}
-
-			const response =
-				await fetch(
-
-					`${API}/${id}`,
-
-					{
-
-						method: "DELETE",
-
-						credentials: "same-origin",
-
-					},
-
-				);
-
-			if (
-				response.status === 401
-			) {
-
-				sessionExpired();
-
-				return;
-
-			}
-
-			if (!response.ok) {
-
-				console.error(
-					"No fue posible eliminar el libro.",
-				);
-
-				return;
-
-			}
-
-			await loadBooks();
-
-		}
-
-	},
-
+      await loadBooks();
+    }
+  },
 );
 
 // ===================================
@@ -374,113 +270,103 @@ bookList.addEventListener(
 // ===================================
 
 form.addEventListener(
+  "submit",
 
-	"submit",
+  async function (event) {
+    event.preventDefault();
 
-	async function(
-		event,
-	) {
+    const data = {
+      title: titleInput.value.trim(),
 
-		event.preventDefault();
+      author: authorInput.value.trim(),
 
-		const data = {
+      isbn: isbnInput.value.trim(),
 
-			title: titleInput.value.trim(),
+      image: imageInput.value.trim(),
+    };
 
-			author: authorInput.value.trim(),
+    let response;
+    let createdBookId = null;
 
-			isbn: isbnInput.value.trim(),
+    if (editingBookId === null) {
+      response = await fetch(
+        API,
 
-			image: imageInput.value.trim(),
+        {
+          method: "POST",
 
-		};
+          credentials: "same-origin",
 
-		let response;
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-		if (
-			editingBookId ===
-			null
-		) {
+          body: JSON.stringify(data),
+        },
+      );
 
-			response =
-				await fetch(
+      if (response.ok) {
+        const createdBook = await response.json();
+        createdBookId = createdBook.id;
+      }
+    } else {
+      response = await fetch(
+        `${API}/${editingBookId}`,
 
-					API,
+        {
+          method: "PUT",
 
-					{
+          credentials: "same-origin",
 
-						method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-						credentials: "same-origin",
+          body: JSON.stringify(data),
+        },
+      );
+    }
 
-						headers: {
+    if (response.status === 401) {
+      sessionExpired();
 
-							"Content-Type": "application/json",
+      return;
+    }
 
-						},
+    if (!response.ok) {
+      console.error("No fue posible guardar el libro.");
 
-						body: JSON.stringify(
-							data,
-						),
+      return;
+    }
 
-					},
+    // Si es un libro nuevo y se completó el título del capítulo inicial, lo creamos automáticamente
+    if (
+      editingBookId === null &&
+      createdBookId &&
+      initialChapterTitleInput &&
+      initialChapterTitleInput.value.trim() !== ""
+    ) {
+      const chapterData = {
+        chapter_number: parseInt(initialChapterNumberInput.value) || 1,
+        title: initialChapterTitleInput.value.trim(),
+        content: initialChapterContentInput.value.trim(),
+      };
 
-				);
+      try {
+        await fetch(`${API}/${createdBookId}/chapters`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(chapterData),
+        });
+      } catch (err) {
+        console.error("Error al registrar el capítulo inicial:", err);
+      }
+    }
 
-		} else {
-
-			response =
-				await fetch(
-
-					`${API}/${editingBookId}`,
-
-					{
-
-						method: "PUT",
-
-						credentials: "same-origin",
-
-						headers: {
-
-							"Content-Type": "application/json",
-
-						},
-
-						body: JSON.stringify(
-							data,
-						),
-
-					},
-
-				);
-
-		}
-
-		if (
-			response.status ===
-			401
-		) {
-
-			sessionExpired();
-
-			return;
-
-		}
-
-		if (!response.ok) {
-
-			console.error(
-				"No fue posible guardar el libro.",
-			);
-
-			return;
-
-		}
-
-		resetForm();
-
-		await loadBooks();
-
-	},
-
+    resetForm();
+    loadBooks();
+  },
 );

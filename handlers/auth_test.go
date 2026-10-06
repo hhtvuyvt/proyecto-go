@@ -2,13 +2,16 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/hhtvuyvt/proyecto-go/middlewares"
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
@@ -92,5 +95,46 @@ func TestLogoutHandler(t *testing.T) {
 
 	if cookie.MaxAge != -1 {
 		t.Fatal("la cookie no fue eliminada")
+	}
+}
+
+func TestMeHandlerSuccess(t *testing.T) {
+	handler := &AuthHandler{
+		UserRepo: fakeUserRepo{},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/me", nil)
+	claims := jwt.MapClaims{"username": "admin", "sub": float64(1)}
+	ctx := context.WithValue(req.Context(), middlewares.ClaimsKey, claims)
+	req = req.WithContext(ctx)
+
+	rec := httptest.NewRecorder()
+	handler.MeHandler(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("esperaba 200, obtuvo %d", rec.Code)
+	}
+
+	var user models.User
+	if err := json.NewDecoder(rec.Body).Decode(&user); err != nil {
+		t.Fatalf("error decodificando respuesta: %v", err)
+	}
+
+	if user.Username != "admin" {
+		t.Fatalf("esperaba username admin, obtuvo %s", user.Username)
+	}
+}
+
+func TestMeHandlerUnauthorized(t *testing.T) {
+	handler := &AuthHandler{
+		UserRepo: fakeUserRepo{},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/me", nil)
+	rec := httptest.NewRecorder()
+	handler.MeHandler(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("esperaba 401, obtuvo %d", rec.Code)
 	}
 }

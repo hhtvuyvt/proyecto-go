@@ -97,3 +97,42 @@ func TestRouterProtectedBooks(t *testing.T) {
 		t.Fatalf("esperaba 401 sin token, obtuvo %d", rec.Code)
 	}
 }
+
+func TestRouterBooksPostRequiresAuth(t *testing.T) {
+	router := createTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/books", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("esperaba 401 sin token, obtuvo %d", rec.Code)
+	}
+}
+
+func TestRouterChaptersPostRequiresAuth(t *testing.T) {
+	router := createTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/books/1/chapters", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("esperaba 401 sin token, obtuvo %d", rec.Code)
+	}
+}
+
+func TestRouterMeRequiresAuth(t *testing.T) {
+	router := createTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/me", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("esperaba 401 sin token, obtuvo %d", rec.Code)
+	}
+}
