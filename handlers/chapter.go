@@ -20,12 +20,14 @@ func (h *ChapterHandler) CreateChapterHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Opcional: asegurar que el book_id de la URL coincida con el del body si es necesario
 	bookIDStr := r.PathValue("book_id")
 	bookID, err := strconv.ParseInt(bookIDStr, 10, 64)
-	if err == nil {
-		c.BookID = bookID
+	if err != nil {
+		http.Error(w, "ID de libro inválido", http.StatusBadRequest)
+		return
 	}
+
+	c.BookID = bookID
 
 	if err := h.ChapterRepo.Create(&c); err != nil {
 		http.Error(w, "Error al guardar el capítulo", http.StatusInternalServerError)
@@ -39,8 +41,7 @@ func (h *ChapterHandler) CreateChapterHandler(w http.ResponseWriter, r *http.Req
 
 // GetChapterHandler maneja la petición para obtener un capítulo específico
 func (h *ChapterHandler) GetChapterHandler(w http.ResponseWriter, r *http.Request) {
-	// Extraer el ID del capítulo de la URL (ajusta según tu enrutador)
-	chapterIDStr := r.PathValue("id") // O usando tu método actual de parsing de rutas
+	chapterIDStr := r.PathValue("id")
 	chapterID, err := strconv.ParseInt(chapterIDStr, 10, 64)
 	if err != nil {
 		http.Error(w, "ID de capítulo inválido", http.StatusBadRequest)
