@@ -31,8 +31,8 @@ func Router(cfg RouterConfig) http.Handler {
 	// Rutas Públicas
 	// =====================
 	mux.HandleFunc("GET /api/books", bookHandler.Books)
-	mux.HandleFunc("/api/login", authHandler.LoginHandler)
-	mux.HandleFunc("/api/logout", authHandler.LogoutHandler)
+	mux.HandleFunc("POST /api/login", authHandler.LoginHandler)
+	mux.HandleFunc("POST /api/logout", authHandler.LogoutHandler)
 
 	// Ruta pública para leer capítulos
 	mux.HandleFunc("GET /api/books/{book_id}/chapters/{id}", chapterHandler.GetChapterHandler)
