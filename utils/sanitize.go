@@ -7,14 +7,14 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-// SanitizeBook limpia y sanea los campos de texto de un libro.
-func SanitizeBook(b *models.Book) {
-	if b == nil {
+// SanitizeItem limpia y sanea los campos de texto de un item (previene XSS).
+func SanitizeItem(item *models.Item) {
+	if item == nil {
 		return
 	}
 
-	b.Title = html.EscapeString(strings.TrimSpace(b.Title))
-	b.Author = html.EscapeString(strings.TrimSpace(b.Author))
-	b.ISBN = html.EscapeString(strings.TrimSpace(b.ISBN))
-	b.Image = strings.TrimSpace(b.Image)
+	item.Name = html.EscapeString(strings.TrimSpace(item.Name))
+	item.Category = html.EscapeString(strings.TrimSpace(item.Category))
+	item.Code = html.EscapeString(strings.TrimSpace(item.Code))
+	item.Image = strings.TrimSpace(item.Image)
 }

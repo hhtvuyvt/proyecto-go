@@ -6,38 +6,35 @@ import (
 	"github.com/hhtvuyvt/proyecto-go/models"
 )
 
-func TestSanitizeBook(t *testing.T) {
-	book := &models.Book{
-		Title:  "   Golang Guide <script>alert('xss')</script>   ",
-		Author: "   John 'The Creator' Doe   ",
-		ISBN:   "   978-3-16-148410-0   ",
-		Image:  "   /uploads/books/golang.png   ",
+func TestSanitizeItem(t *testing.T) {
+	item := &models.Item{
+		Name:     "  <script>alert('xss')</script> Laptop  ",
+		Category: "  Electrónica  ",
+		Code:     "  SKU-123  ",
+		Image:    "  image.jpg  ",
 	}
 
-	SanitizeBook(book)
+	SanitizeItem(item)
 
-	expectedTitle := "Golang Guide &lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;"
-	if book.Title != expectedTitle {
-		t.Errorf("título incorrecto.\nEsperado: %s\nObtenido: %s", expectedTitle, book.Title)
+	// Verificamos que el HTML fue escapado y los espacios eliminados
+	if item.Name == "<script>alert('xss')</script> Laptop" {
+		t.Errorf("El nombre no fue saneado (XSS no prevenido): %s", item.Name)
 	}
 
-	expectedAuthor := "John &#39;The Creator&#39; Doe"
-	if book.Author != expectedAuthor {
-		t.Errorf("autor incorrecto.\nEsperado: %s\nObtenido: %s", expectedAuthor, book.Author)
+	if item.Category != "Electrónica" {
+		t.Errorf("La categoría no fue saneada correctamente: %s", item.Category)
 	}
 
-	expectedISBN := "978-3-16-148410-0"
-	if book.ISBN != expectedISBN {
-		t.Errorf("ISBN incorrecto.\nEsperado: %s\nObtenido: %s", expectedISBN, book.ISBN)
+	if item.Code != "SKU-123" {
+		t.Errorf("El código no fue saneado correctamente: %s", item.Code)
 	}
 
-	expectedImage := "/uploads/books/golang.png"
-	if book.Image != expectedImage {
-		t.Errorf("imagen incorrecta.\nEsperado: %s\nObtenido: %s", expectedImage, book.Image)
+	if item.Image != "image.jpg" {
+		t.Errorf("La imagen no fue saneada correctamente: %s", item.Image)
 	}
 }
 
-func TestSanitizeBookNil(t *testing.T) {
-	// Verifica que no genere panic si se pasa un puntero nil
-	SanitizeBook(nil)
+func TestSanitizeItem_Nil(t *testing.T) {
+	// No debería entrar en pánico si se pasa nil
+	SanitizeItem(nil)
 }

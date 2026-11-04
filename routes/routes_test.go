@@ -20,14 +20,17 @@ func createTestRouter(t *testing.T) http.Handler {
 		t.Fatalf("no se pudo abrir la base de datos de prueba: %v", err)
 	}
 
-	bookRepo := &models.BookRepository{DB: testDB}
+	// 1. AÑADIDO: ItemRepo es obligatorio en el nuevo RouterConfig
+	itemRepo := &models.ItemRepository{DB: testDB}
+	detailRepo := &models.DetailRepository{DB: testDB}
 	userRepo := &models.UserRepository{DB: testDB}
 
 	return Router(
 		RouterConfig{
-			BookRepo: bookRepo,
-			UserRepo: userRepo,
-			JWTKey:   []byte("test-secret"),
+			ItemRepo:   itemRepo,   // <-- AÑADIDO
+			DetailRepo: detailRepo, // <-- CORREGIDO (antes ChapterRepo)
+			UserRepo:   userRepo,
+			JWTKey:     []byte("test-secret"),
 		},
 	)
 }
@@ -71,37 +74,40 @@ func TestRouterLoginRoute(t *testing.T) {
 	}
 }
 
-func TestRouterBooksPublicRoute(t *testing.T) {
+// 2. ACTUALIZADO: De books a items
+func TestRouterItemsPublicRoute(t *testing.T) {
 	router := createTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/books", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/items", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
 
 	if rec.Code == http.StatusNotFound {
-		t.Fatal("ruta /api/books no existe")
+		t.Fatal("ruta /api/items no existe")
 	}
 }
 
-func TestRouterProtectedBooks(t *testing.T) {
+// 3. ACTUALIZADO: URL a /api/items/1
+func TestRouterProtectedItems(t *testing.T) {
 	router := createTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodDelete, "/api/books/1", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/items/1", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
 
-	// Sin JWT debe bloquear
+	// Sin JWT debe bloquear con 401
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("esperaba 401 sin token, obtuvo %d", rec.Code)
 	}
 }
 
-func TestRouterBooksPostRequiresAuth(t *testing.T) {
+// 4. ACTUALIZADO: URL a /api/items
+func TestRouterItemsPostRequiresAuth(t *testing.T) {
 	router := createTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/books", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/items", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
@@ -111,10 +117,11 @@ func TestRouterBooksPostRequiresAuth(t *testing.T) {
 	}
 }
 
-func TestRouterChaptersPostRequiresAuth(t *testing.T) {
+// 5. ACTUALIZADO: URL a /api/items/1/details
+func TestRouterDetailsPostRequiresAuth(t *testing.T) {
 	router := createTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/books/1/chapters", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/items/1/details", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)

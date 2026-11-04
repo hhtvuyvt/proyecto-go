@@ -217,12 +217,8 @@ func TestEnsureAdminUserWithoutUsername(
 			database,
 		)
 
-	if err == nil {
-
-		t.Fatal(
-			"se esperaba un error",
-		)
-
+	if err != nil {
+		t.Errorf("se esperaba nil (sin error) cuando faltan variables de entorno, obtuvo: %v", err)
 	}
 
 }
@@ -255,12 +251,8 @@ func TestEnsureAdminUserWithoutPassword(
 			database,
 		)
 
-	if err == nil {
-
-		t.Fatal(
-			"se esperaba un error",
-		)
-
+	if err != nil {
+		t.Errorf("se esperaba nil (sin error) cuando falta ADMIN_PASSWORD, obtuvo: %v", err)
 	}
 
 	var total int

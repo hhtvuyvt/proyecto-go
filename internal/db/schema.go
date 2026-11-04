@@ -3,33 +3,35 @@ package db
 import "database/sql"
 
 // CreateSchema crea todas las tablas necesarias para la aplicación.
+// Actualizado para modelo SaaS (Items y Details en lugar de Books y Chapters).
 func CreateSchema(db *sql.DB) error {
 	const schema = `
-	CREATE TABLE IF NOT EXISTS books (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		title TEXT NOT NULL,
-		author TEXT NOT NULL,
-		isbn TEXT NOT NULL,
-		image TEXT NOT NULL
-	);
-
+	-- Tabla de usuarios (se mantiene igual, es la base del SaaS)
 	CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		username TEXT NOT NULL UNIQUE,
 		password_hash TEXT NOT NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);
-
 	CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 
-	CREATE TABLE IF NOT EXISTS chapters (
+	-- Tabla de Items (reemplaza a 'books'. Ej: Productos en tienda, Habitaciones en hotel)
+	CREATE TABLE IF NOT EXISTS items (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		book_id INTEGER NOT NULL,
-		chapter_number INTEGER NOT NULL,
-		title TEXT NOT NULL,
-		content TEXT NOT NULL,
+		name TEXT NOT NULL,        -- Antes: title
+		category TEXT NOT NULL,    -- Antes: author
+		code TEXT NOT NULL,        -- Antes: isbn (SKU, código de habitación, etc.)
+		image TEXT NOT NULL
+	);
+
+	-- Tabla de Detalles (reemplaza a 'chapters'. Ej: Variantes, Reservas, Especificaciones)
+	CREATE TABLE IF NOT EXISTS details (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		item_id INTEGER NOT NULL,  -- Antes: book_id
+		name TEXT NOT NULL,        -- Antes: title (del capítulo)
+		content TEXT NOT NULL,     -- Antes: content
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+		FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
 	);
 	`
 

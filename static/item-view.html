@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visor de Item - SaaS</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary shadow-sm">
+      <div class="container">
+        <a href="/static/index.html" class="navbar-brand text-decoration-none">
+          ⬅️ Volver al Catálogo
+        </a>
+        <div id="userPanel" class="d-none">
+          <span id="usernameLabel" class="text-white me-3 small">admin</span>
+          <button id="logoutButton" class="btn btn-outline-light btn-sm">
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container my-4">
+      <!-- Título principal del Item -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <h1 id="itemNameHeader" class="display-6 fw-bold text-dark">
+            Cargando...
+          </h1>
+          <p id="itemCategoryHeader" class="text-muted mb-0">
+            Cargando información...
+          </p>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Barra lateral: Lista de Detalles y Formulario -->
+        <div class="col-md-4 mb-4">
+          <div class="card shadow-sm mb-3 border-0">
+            <div class="card-body">
+              <h5 class="card-title mb-3 fw-bold">Detalles / Variantes</h5>
+              <div id="detailList" class="list-group list-group-flush">
+                <p class="text-muted small mb-0">Cargando detalles...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulario de nuevo detalle (Visible solo si está autenticado) -->
+          <div id="detailFormCard" class="card shadow-sm border-0 d-none">
+            <div class="card-body bg-white rounded">
+              <h5 class="card-title mb-3 fw-bold text-success">
+                ➕ Agregar Detalle
+              </h5>
+              <form id="detailForm">
+                <div class="mb-2">
+                  <label
+                    for="detailNameInput"
+                    class="form-label small fw-semibold"
+                  >
+                    Nombre del Detalle
+                  </label>
+                  <input
+                    type="text"
+                    id="detailNameInput"
+                    class="form-control form-control-sm"
+                    placeholder="Ej. Especificación, Regla, Módulo"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label
+                    for="detailContentInput"
+                    class="form-label small fw-semibold"
+                  >
+                    Contenido / Descripción
+                  </label>
+                  <textarea
+                    id="detailContentInput"
+                    class="form-control form-control-sm"
+                    rows="5"
+                    placeholder="Escribe el contenido aquí..."
+                    required
+                  ></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-sm w-100">
+                  Guardar Detalle
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel de visualización principal -->
+        <div class="col-md-8">
+          <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+              <h3 id="detailTitle" class="mb-3 text-primary fw-bold">
+                Selecciona un detalle
+              </h3>
+              <hr class="mb-4" />
+              <div
+                id="detailContent"
+                class="fs-5 text-secondary"
+                style="white-space: pre-line; line-height: 1.8"
+              >
+                El contenido del detalle aparecerá aquí...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        // CAMBIO: book_id -> item_id
+        const itemID = urlParams.get("item_id");
+        let detailID = urlParams.get("detail_id") || urlParams.get("id");
+
+        if (!itemID) {
+          document.getElementById("itemNameHeader").innerText = "Error";
+          document.getElementById("detailContent").innerText =
+            "No se especificó un item válido en la URL (ej: ?item_id=1).";
+          return;
+        }
+
+        // 1. Comprobar sesión y mostrar formulario si está autenticado
+        try {
+          const meRes = await fetch("/api/me", { credentials: "same-origin" });
+          if (meRes.ok) {
+            document
+              .getElementById("detailFormCard")
+              .classList.remove("d-none");
+          }
+        } catch (e) {
+          // Usuario no autenticado
+        }
+
+        // 2. Cargar información del Item actual
+        try {
+          // CAMBIO: /api/books -> /api/items
+          const itemRes = await fetch(`/api/items/${itemID}`);
+          if (itemRes.ok) {
+            const item = await itemRes.json();
+            document.getElementById("itemNameHeader").innerText = item.name;
+            document.getElementById("itemCategoryHeader").innerText =
+              `Categoría: ${item.category} ${item.code ? "• Código: " + item.code : ""}`;
+          } else {
+            document.getElementById("itemNameHeader").innerText =
+              "No encontrado";
+          }
+        } catch (e) {
+          console.error("No se pudo cargar la info del item", e);
+        }
+
+        // 3. Cargar detalles del item y renderizar lista
+        async function loadDetails() {
+          try {
+            // CAMBIO: /api/books/{id}/chapters -> /api/items/{id}/details
+            const res = await fetch(`/api/items/${itemID}/details`);
+            if (!res.ok) throw new Error("Error al obtener detalles");
+            const details = await res.json();
+
+            const detailListEl = document.getElementById("detailList");
+            detailListEl.innerHTML = "";
+
+            if (!details || details.length === 0) {
+              detailListEl.innerHTML =
+                "<p class='text-muted small mb-0'>Aún no hay detalles registrados.</p>";
+              return [];
+            }
+
+            // Si no hay un detalle seleccionado en la URL, seleccionamos el primero por defecto
+            if (!detailID && details.length > 0) {
+              detailID = details[0].id;
+            }
+
+            details.forEach((det) => {
+              const a = document.createElement("a");
+              // CAMBIO: Parámetros de URL actualizados
+              a.href = `?item_id=${itemID}&detail_id=${det.id}`;
+              a.className = `list-group-item list-group-item-action ${det.id == detailID ? "active" : ""}`;
+              // CAMBIO: Ya no usamos chapter_number, solo el nombre
+              a.innerText = det.name;
+              detailListEl.appendChild(a);
+            });
+
+            return details;
+          } catch (err) {
+            console.error(err);
+            return [];
+          }
+        }
+
+        const details = await loadDetails();
+
+        // 4. Cargar contenido del detalle seleccionado si existe
+        if (detailID && details.length > 0) {
+          try {
+            const detailRes = await fetch(
+              `/api/items/${itemID}/details/${detailID}`,
+            );
+            if (detailRes.ok) {
+              const detail = await detailRes.json();
+              document.getElementById("detailTitle").innerText = detail.name;
+              document.getElementById("detailContent").innerText =
+                detail.content;
+            }
+          } catch (err) {
+            console.error("Error al cargar el detalle", err);
+          }
+        }
+
+        // 5. Manejar envío del formulario para crear un nuevo detalle
+        const detailForm = document.getElementById("detailForm");
+        detailForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          // CAMBIO: Payload adaptado al modelo Detail (name, content)
+          const payload = {
+            name: document.getElementById("detailNameInput").value.trim(),
+            content: document.getElementById("detailContentInput").value.trim(),
+          };
+
+          try {
+            const response = await fetch(`/api/items/${itemID}/details`, {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+              // Recargar para mostrar el nuevo detalle y seleccionarlo
+              window.location.reload();
+            } else {
+              alert("No fue posible crear el detalle. Verifica tu sesión.");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Error de conexión al guardar el detalle.");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

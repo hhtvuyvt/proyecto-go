@@ -60,7 +60,6 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    tokenStr,
@@ -121,4 +120,69 @@ func (h *AuthHandler) MeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error generando respuesta", http.StatusInternalServerError)
 		return
 	}
+}
+
+// RegisterRequest representa el cuerpo JSON para crear un nuevo usuario.
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	// Puedes agregar más campos aquí para SaaS, ej: Email, CompanyName, etc.
+}
+
+// RegisterHandler crea un nuevo usuario en la base de datos.
+func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "método no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req RegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "datos inválidos", http.StatusBadRequest)
+		return
+	}
+
+	// Validación básica
+	if req.Username == "" || req.Password == "" {
+		http.Error(w, "usuario y contraseña son obligatorios", http.StatusBadRequest)
+		return
+	}
+
+	// 1. Verificar si el usuario ya existe
+	_, err := h.UserRepo.GetByUsername(req.Username)
+	if err == nil {
+		// Si no devuelve error, es que el usuario YA existe
+		http.Error(w, "el usuario ya existe", http.StatusConflict)
+		return
+	}
+
+	// 2. Hashear la contraseña (Costo 10 es el estándar recomendado)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "error interno del servidor", http.StatusInternalServerError)
+		return
+	}
+
+	// 3. Crear el objeto usuario
+	newUser := models.User{
+		Username:     req.Username,
+		PasswordHash: string(hashedPassword),
+		// Role: "tenant", // Descomenta si tienes un campo de rol en tu modelo
+	}
+
+	// 4. Guardar en la base de datos
+	// NOTA: Necesitarás agregar el método Create a tu UserRepositoryInterface
+	err = h.UserRepo.Create(&newUser)
+	if err != nil {
+		http.Error(w, "error creando el usuario", http.StatusInternalServerError)
+		return
+	}
+
+	// 5. Responder con éxito (Sin devolver la contraseña, por supuesto)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message":  "usuario creado exitosamente",
+		"username": newUser.Username,
+	})
 }

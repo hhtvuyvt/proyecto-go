@@ -10,41 +10,51 @@ import (
 
 // RouterConfig agrupa las dependencias necesarias para construir el router.
 type RouterConfig struct {
-	BookRepo    models.BookRepositoryInterface
-	UserRepo    models.UserRepositoryInterface
-	ChapterRepo models.ChapterRepositoryInterface
-	JWTKey      []byte
+	ItemRepo   models.ItemRepositoryInterface // Antes BookRepo
+	UserRepo   models.UserRepositoryInterface
+	DetailRepo models.DetailRepositoryInterface // Antes ChapterRepo
+	JWTKey     []byte
 }
 
 // Router configura todas las rutas HTTP de la aplicación.
 func Router(cfg RouterConfig) http.Handler {
 	mux := http.NewServeMux()
 
-	bookHandler := handlers.BookHandler{Repo: cfg.BookRepo}
+	// Instanciación de handlers con inyección de dependencias
+	itemHandler := handlers.ItemHandler{Repo: cfg.ItemRepo} // Antes BookHandler
 	authHandler := handlers.AuthHandler{
 		UserRepo: cfg.UserRepo,
 		JWTKey:   cfg.JWTKey,
 	}
-	chapterHandler := handlers.ChapterHandler{ChapterRepo: cfg.ChapterRepo} // <-- Instanciado con el repo inyectado
+	detailHandler := handlers.DetailHandler{Repo: cfg.DetailRepo} // Antes ChapterHandler
 
 	// =====================
 	// Rutas Públicas
 	// =====================
-	mux.HandleFunc("GET /api/books", bookHandler.Books)
+	mux.HandleFunc("GET /api/items", itemHandler.List) // Antes: bookHandler.Books
 	mux.HandleFunc("POST /api/login", authHandler.LoginHandler)
 	mux.HandleFunc("POST /api/logout", authHandler.LogoutHandler)
+	// mux.HandleFunc("POST /api/register", authHandler.RegisterHandler) // <-- DESBLOQUEAR PRONTO
 
-	// Ruta pública para leer capítulos
-	mux.HandleFunc("GET /api/books/{book_id}/chapters/{id}", chapterHandler.GetChapterHandler)
-	mux.HandleFunc("GET /api/books/{book_id}/chapters", chapterHandler.ListChaptersHandler)
+	// Ruta pública para leer detalles (ej: variantes de producto o info de habitación)
+	mux.HandleFunc("GET /api/items/{item_id}/details/{id}", detailHandler.Get)
+	mux.HandleFunc("GET /api/items/{item_id}/details", detailHandler.List)
 
 	// =====================
-	// Rutas Protegidas
+	// Rutas Protegidas (Requieren JWT)
 	// =====================
 	mux.Handle("GET /api/me", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(authHandler.MeHandler)))
-	mux.Handle("POST /api/books", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(bookHandler.Books)))
-	mux.Handle("POST /api/books/{book_id}/chapters", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(chapterHandler.CreateChapterHandler)))
-	mux.Handle("/api/books/", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(bookHandler.Book)))
+
+	// CRUD de Items (Protegido)
+	mux.Handle("POST /api/items", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(itemHandler.Create)))
+	mux.Handle("GET /api/items/{id}", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(itemHandler.Get)))
+	mux.Handle("PUT /api/items/{id}", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(itemHandler.Update)))
+	mux.Handle("DELETE /api/items/{id}", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(itemHandler.Delete)))
+
+	// CRUD de Detalles (Protegido)
+	mux.Handle("POST /api/items/{item_id}/details", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(detailHandler.Create)))
+
+	// Utilidades
 	mux.Handle("/api/upload", middlewares.AuthMiddleware(cfg.JWTKey, http.HandlerFunc(handlers.UploadImage)))
 
 	// =====================
@@ -54,11 +64,11 @@ func Router(cfg RouterConfig) http.Handler {
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	// =====================
-	// Redirección Raíz
+	// Redirección Raíz (Frontend)
 	// =====================
 	mux.Handle("/", http.RedirectHandler("/static/index.html", http.StatusTemporaryRedirect))
 
-	// Aplicar Middlewares globales
+	// Aplicar Middlewares globales (Logger y Recover ante panics)
 	return middlewares.RecoverMiddleware(
 		middlewares.LoggerMiddleware(mux),
 	)

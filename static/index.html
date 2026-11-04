@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tienda de Libros</title>
+    <title>Gestión de Catálogo SaaS</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -13,11 +13,10 @@
   <body>
     <nav class="navbar navbar-dark bg-primary">
       <div class="container">
-        <span class="navbar-brand"> 📚 Tienda de Libros </span>
+        <span class="navbar-brand"> 📦 Gestión de Catálogo SaaS </span>
 
         <div id="userPanel" class="d-none">
           <span id="usernameLabel" class="text-white me-3"> admin </span>
-
           <button id="logoutButton" class="btn btn-outline-light btn-sm">
             Cerrar sesión
           </button>
@@ -29,7 +28,6 @@
       <!-- ============================= -->
       <!-- LOGIN                         -->
       <!-- ============================= -->
-
       <div id="loginPanel" class="row justify-content-center">
         <div class="col-md-5">
           <div class="card shadow">
@@ -38,10 +36,7 @@
 
               <form id="loginForm">
                 <div class="mb-3">
-                  <label for="loginUsername" class="form-label">
-                    Usuario
-                  </label>
-
+                  <label for="loginUsername" class="form-label">Usuario</label>
                   <input
                     id="loginUsername"
                     class="form-control"
@@ -52,10 +47,9 @@
                 </div>
 
                 <div class="mb-3">
-                  <label for="loginPassword" class="form-label">
-                    Contraseña
-                  </label>
-
+                  <label for="loginPassword" class="form-label"
+                    >Contraseña</label
+                  >
                   <input
                     id="loginPassword"
                     class="form-control"
@@ -79,92 +73,86 @@
       <!-- ============================= -->
       <!-- APLICACIÓN                    -->
       <!-- ============================= -->
-
       <div id="appPanel" class="d-none">
-        <h2 class="mb-3">Agregar / Editar Libro</h2>
+        <h2 class="mb-3">Agregar / Editar Item</h2>
 
-        <form id="book-form" class="row g-3">
+        <!-- FORMULARIO ACTUALIZADO A SAAS -->
+        <form id="item-form" class="row g-3">
           <div class="col-md-6">
-            <label for="title" class="form-label"> Título </label>
+            <label for="name" class="form-label"> Nombre del Item </label>
             <input
               type="text"
-              id="title"
-              name="title"
+              id="name"
+              name="name"
               class="form-control"
+              placeholder="Ej. Laptop Gamer, Habitación Doble"
               required
             />
           </div>
 
           <div class="col-md-6">
-            <label for="author" class="form-label"> Autor </label>
-
+            <label for="category" class="form-label"> Categoría / Tipo </label>
             <input
               type="text"
-              id="author"
-              name="author"
+              id="category"
+              name="category"
               class="form-control"
+              placeholder="Ej. Electrónica, Suite"
               required
             />
           </div>
 
           <div class="col-md-4">
-            <label for="ISBN" class="form-label"> ISBN </label>
-            <input type="text" id="ISBN" name="ISBN" class="form-control" />
+            <label for="code" class="form-label"> Código / SKU </label>
+            <input
+              type="text"
+              id="code"
+              name="code"
+              class="form-control"
+              placeholder="Ej. SKU-123, HAB-101"
+            />
           </div>
 
           <div class="col-md-8">
-            <label for="image" class="form-label"> Portada </label>
-
+            <label for="image" class="form-label"> URL de la Imagen </label>
             <input
               type="text"
               id="image"
               name="image"
               class="form-control"
-              placeholder="URL o imagen"
+              placeholder="https://ejemplo.com/imagen.jpg"
             />
           </div>
 
-          <!-- Sección opcional para el primer capítulo al crear el libro -->
+          <!-- Sección opcional para el primer detalle al crear el item -->
           <div class="col-12 mt-4">
             <div class="card bg-light border-0 p-3">
               <h5 class="card-title fs-6 text-primary fw-bold mb-3">
-                📖 Primer Capítulo (Opcional al crear)
+                📝 Detalle Inicial (Opcional al crear)
               </h5>
               <div class="row g-2">
-                <div class="col-md-3">
-                  <label for="initialChapterNumber" class="form-label small"
-                    >N° Capítulo</label
-                  >
-                  <input
-                    type="number"
-                    id="initialChapterNumber"
-                    name="initialChapterNumber"
-                    class="form-control form-control-sm"
-                    value="1"
-                  />
-                </div>
-                <div class="col-md-9">
-                  <label for="initialChapterTitle" class="form-label small"
-                    >Título del Capítulo</label
-                  >
+                <div class="col-md-4">
+                  <label for="initialDetailName" class="form-label small">
+                    Nombre del Detalle / Variante
+                  </label>
                   <input
                     type="text"
-                    id="initialChapterTitle"
-                    name="initialChapterTitle"
+                    id="initialDetailName"
+                    name="initialDetailName"
                     class="form-control form-control-sm"
-                    placeholder="Ej. Introducción"
+                    placeholder="Ej. Color Negro, Incluye Desayuno"
                   />
                 </div>
                 <div class="col-12 mt-2">
-                  <label for="initialChapterContent" class="form-label small"
-                    >Contenido inicial</label
-                  >
+                  <label for="initialDetailContent" class="form-label small">
+                    Descripción / Contenido
+                  </label>
                   <textarea
-                    id="initialChapterContent"
-                    name="initialChapterContent"
+                    id="initialDetailContent"
+                    name="initialDetailContent"
                     class="form-control form-control-sm"
                     rows="3"
-                    placeholder="Escribe el contenido..."
+                    placeholder="Escribe las especificaciones o detalles..."
                   ></textarea>
                 </div>
               </div>
@@ -180,14 +168,15 @@
 
         <hr class="my-4" />
 
-        <h2>Catálogo</h2>
-
-        <div id="book-list" class="row g-4"></div>
+        <h2>Catálogo de Items</h2>
+        <div id="item-list" class="row g-4"></div>
       </div>
     </div>
 
+    <!-- SCRIPTS ACTUALIZADOS -->
     <script src="/static/js/auth.js"></script>
-    <script src="/static/js/book.js"></script>
+    <script src="/static/js/item.js"></script>
+    <!-- Cambiado de book.js a item.js -->
     <script src="/static/js/app.js"></script>
   </body>
 </html>

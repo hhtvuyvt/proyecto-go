@@ -15,125 +15,61 @@ import (
 )
 
 func main() {
-
 	// ==========================
 	// Variables de entorno
 	// ==========================
-
-	if err :=
-		godotenv.Load(); err != nil {
-
-		log.Println(
-			"No se encontró .env, usando variables del sistema",
-		)
-
+	if err := godotenv.Load(); err != nil {
+		log.Println("No se encontró .env, usando variables del sistema")
 	}
 
 	// ==========================
 	// Puerto
 	// ==========================
-
-	port :=
-		os.Getenv(
-			"PORT",
-		)
-
+	port := os.Getenv("PORT")
 	if port == "" {
-
 		port = "8080"
-
 	}
 
 	// ==========================
 	// JWT
 	// ==========================
-
-	jwtSecret :=
-		os.Getenv(
-			"JWT_SECRET",
-		)
-
+	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-
 		if os.Getenv("E2E") == "true" {
-
-			log.Println(
-				"Modo E2E: usando JWT_SECRET temporal",
-			)
-
-			jwtSecret =
-				"test-secret-key"
-
+			log.Println("Modo E2E: usando JWT_SECRET temporal")
+			jwtSecret = "test-secret-key"
 		} else {
-
-			log.Fatal(
-				"JWT_SECRET no configurado",
-			)
-
+			log.Fatal("JWT_SECRET no configurado")
 		}
-
 	}
 
 	// ==========================
 	// Base de datos
 	// ==========================
-
-	dbPath :=
-		os.Getenv(
-			"DB_PATH",
-		)
-
+	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
-
 		if os.Getenv("E2E") == "true" {
-
-			log.Println(
-				"Modo E2E: usando base de datos temporal",
-			)
-
-			dbPath =
-				"./test.db"
-
+			log.Println("Modo E2E: usando base de datos temporal")
+			dbPath = "./test.db"
 		} else {
-
-			log.Fatal(
-				"DB_PATH no configurado",
-			)
-
+			log.Fatal("DB_PATH no configurado")
 		}
-
 	}
 
-	sqlDB, err :=
-		db.Open(
-			dbPath,
-		)
-
+	sqlDB, err := db.Open(dbPath)
 	if err != nil {
-
 		log.Fatal(err)
-
 	}
-
 	defer func() {
-
-		if err :=
-			sqlDB.Close(); err != nil {
-
-			log.Println(
-				"Error cerrando base de datos:",
-				err,
-			)
-
+		if err := sqlDB.Close(); err != nil {
+			log.Println("Error cerrando base de datos:", err)
 		}
-
 	}()
 
 	// ==========================
-	// Repositorios
+	// Repositorios (ACTUALIZADO A SAAS)
 	// ==========================
-
-	bookRepo := &models.BookRepository{
+	itemRepo := &models.ItemRepository{
 		DB: sqlDB,
 	}
 
@@ -141,25 +77,19 @@ func main() {
 		DB: sqlDB,
 	}
 
-	chapterRepo := &db.SQLiteChapterRepository{
+	detailRepo := &models.DetailRepository{
 		DB: sqlDB,
 	}
 
 	// ==========================
 	// Router
 	// ==========================
-
-	router :=
-		routes.Router(
-			routes.RouterConfig{
-				BookRepo:    bookRepo,
-				UserRepo:    userRepo,
-				ChapterRepo: chapterRepo,
-				JWTKey: []byte(
-					jwtSecret,
-				),
-			},
-		)
+	router := routes.Router(routes.RouterConfig{
+		ItemRepo:   itemRepo, // <-- Nuevo nombre
+		UserRepo:   userRepo,
+		DetailRepo: detailRepo, // <-- Nuevo nombre
+		JWTKey:     []byte("test"),
+	})
 
 	safePort := strings.NewReplacer("\n", "", "\r", "").Replace(port)
 	log.Println("servidor iniciado en puerto " + safePort) // #nosec G706
@@ -173,7 +103,5 @@ func main() {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	log.Fatal(
-		server.ListenAndServe(),
-	)
+	log.Fatal(server.ListenAndServe())
 }
